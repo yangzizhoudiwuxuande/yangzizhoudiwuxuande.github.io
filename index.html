@@ -720,9 +720,9 @@
             <div class="logo">📝 杨梓周<span>·博客</span></div>
 
             <ul class="nav-links" id="navLinks">
-                <li><a href="#" data-page="home" class="active">首页</a></li>
-                <li><a href="#" data-page="about">关于</a></li>
-                <li><a href="#" data-page="archive">归档</a></li>
+                <li><a href="/" data-page="home" class="active">首页</a></li>
+                <li><a href="/about" data-page="about">关于</a></li>
+                <li><a href="/archives" data-page="archives">归档</a></li>
             </ul>
 
             <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
@@ -1056,6 +1056,11 @@
             return [...state.posts].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, limit);
         }
 
+        // 判断是否在 file:// 协议下（本地直接打开）
+        function isFileProtocol() {
+            return window.location.protocol === 'file:';
+        }
+
         // ============================================================
         //  渲染函数
         // ============================================================
@@ -1087,9 +1092,9 @@
                 <span>⏱ ${getReadTime(post.readTime)}</span>
                 <span class="tag">${post.tags.join(' · ')}</span>
               </div>
-              <h2><a href="#" data-id="${post.id}">${post.title}</a></h2>
+              <h2><a href="/post/${post.id}" data-id="${post.id}">${post.title}</a></h2>
               <p class="excerpt">${post.excerpt}</p>
-              <a href="#" class="read-more" data-id="${post.id}">继续阅读 →</a>
+              <a href="/post/${post.id}" class="read-more" data-id="${post.id}">继续阅读 →</a>
             </div>
           `).join('');
 
@@ -1102,6 +1107,8 @@
             });
             postListEl.querySelectorAll('a[data-id]').forEach(a => {
                 a.addEventListener('click', (e) => {
+                    // 允许中键/ctrl+点击等行为
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
                     e.preventDefault();
                     const id = parseInt(a.dataset.id);
                     openPost(id);
@@ -1141,7 +1148,8 @@
             });
         }
 
-        function renderDetail(post) {
+        // 渲染文章详情（updateURL 控制是否修改地址栏）
+        function renderDetail(post, updateURL = true) {
             if (!post) return;
             state.currentPostId = post.id;
             state.view = 'detail';
@@ -1161,10 +1169,18 @@
             document.querySelector('.search-box').style.display = 'none';
             document.querySelector('#pageHeader').style.display = 'none';
 
-            history.pushState(null, '', `#post-${post.id}`);
+            if (updateURL) {
+                const url = '/post/' + post.id;
+                if (isFileProtocol()) {
+                    window.location.hash = 'post-' + post.id;
+                } else {
+                    history.pushState({ post: post.id }, '', url);
+                }
+            }
         }
 
-        function closeDetail() {
+        // 关闭详情（updateURL 控制是否修改地址栏）
+        function closeDetail(updateURL = true) {
             state.currentPostId = null;
             state.view = 'list';
             detailEl.classList.remove('open');
@@ -1172,13 +1188,21 @@
             paginationEl.style.display = 'flex';
             document.querySelector('.search-box').style.display = 'flex';
             document.querySelector('#pageHeader').style.display = 'block';
-            history.pushState(null, '', window.location.pathname);
+
+            if (updateURL) {
+                if (isFileProtocol()) {
+                    window.location.hash = '';
+                } else {
+                    history.pushState(null, '', '/');
+                }
+            }
         }
 
-        function openPost(id) {
+        // 打开文章（updateURL 控制是否修改地址栏）
+        function openPost(id, updateURL = true) {
             const post = state.posts.find(p => p.id === id);
             if (post) {
-                renderDetail(post);
+                renderDetail(post, updateURL);
                 closeMobileMenu();
             }
         }
@@ -1235,7 +1259,7 @@
 
             const recent = getRecentPosts(4);
             recentListEl.innerHTML = recent.map(p => `
-            <a href="#" data-id="${p.id}" style="font-size:0.92rem;color:var(--text-secondary);transition:color var(--transition);">
+            <a href="/post/${p.id}" data-id="${p.id}" style="font-size:0.92rem;color:var(--text-secondary);transition:color var(--transition);">
               ${p.title}
               <span style="display:block;font-size:0.75rem;color:var(--text-muted);">${formatDate(p.date)}</span>
             </a>
@@ -1243,6 +1267,7 @@
 
             recentListEl.querySelectorAll('a[data-id]').forEach(a => {
                 a.addEventListener('click', (e) => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
                     e.preventDefault();
                     const id = parseInt(a.dataset.id);
                     openPost(id);
@@ -1294,8 +1319,11 @@
         // ============================================================
         //  导航切换
         // ============================================================
-        function navigateTo(page) {
-            closeDetail();
+        function navigateTo(page, updateURL = true) {
+            // 关闭详情，但不更新地址栏（后面统一处理）
+            closeDetail(false);
+
+            // 重置筛选
             state.selectedCategory = null;
             state.selectedTag = null;
             state.searchQuery = '';
@@ -1303,6 +1331,7 @@
             state.currentPage = 1;
             state.filteredPosts = [...state.posts];
 
+            // 更新导航高亮
             navLinks.forEach(link => {
                 link.classList.toggle('active', link.dataset.page === page);
             });
@@ -1334,7 +1363,7 @@
                 paginationEl.innerHTML = '';
                 document.querySelector('.search-box').style.display = 'none';
                 document.querySelector('#pageHeader').style.display = 'block';
-            } else if (page === 'archive') {
+            } else if (page === 'archives') {
                 pageTitle.textContent = '📚 全部归档';
                 pageSubtitle.textContent = `共 ${state.posts.length} 篇文章 · 按时间排列`;
                 const sorted = [...state.posts].sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -1345,7 +1374,7 @@
                   <span>📂 ${p.category}</span>
                   <span class="tag">${p.tags.join(' · ')}</span>
                 </div>
-                <h2><a href="#" data-id="${p.id}">${p.title}</a></h2>
+                <h2><a href="/post/${p.id}" data-id="${p.id}">${p.title}</a></h2>
               </div>
             `).join('');
                 paginationEl.innerHTML = '';
@@ -1354,10 +1383,14 @@
 
                 postListEl.querySelectorAll('.post-card').forEach(el => {
                     const id = parseInt(el.dataset.id);
-                    el.addEventListener('click', () => openPost(id));
+                    el.addEventListener('click', (e) => {
+                        if (e.target.closest('a')) return;
+                        openPost(id);
+                    });
                 });
                 postListEl.querySelectorAll('a[data-id]').forEach(a => {
                     a.addEventListener('click', (e) => {
+                        if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
                         e.preventDefault();
                         const id = parseInt(a.dataset.id);
                         openPost(id);
@@ -1365,7 +1398,62 @@
                 });
             }
 
+            // 更新地址栏
+            if (updateURL) {
+                const url = page === 'home' ? '/' : '/' + page;
+                if (isFileProtocol()) {
+                    window.location.hash = page === 'home' ? '' : page;
+                } else {
+                    history.pushState({ page }, '', url);
+                }
+            }
+
             closeMobileMenu();
+        }
+
+        // ============================================================
+        //  路由：根据当前地址渲染对应页面
+        // ============================================================
+        function getCurrentPath() {
+            if (isFileProtocol()) {
+                // 本地文件：用 hash 作为回退
+                const hash = window.location.hash.replace(/^#/, '');
+                if (hash === 'about') return '/about';
+                if (hash === 'archives') return '/archives';
+                if (hash.startsWith('post-')) return '/post/' + hash.replace('post-', '');
+                return '/';
+            }
+            // HTTP(S)：用 pathname
+            let path = window.location.pathname;
+            // 去除末尾斜杠（根路径除外）
+            if (path.length > 1 && path.endsWith('/')) {
+                path = path.slice(0, -1);
+            }
+            return path;
+        }
+
+        function handleRoute() {
+            const path = getCurrentPath();
+
+            if (path === '/about') {
+                navigateTo('about', false);
+            } else if (path === '/archives') {
+                navigateTo('archives', false);
+            } else if (path.startsWith('/post/')) {
+                const idStr = path.replace('/post/', '').split('/')[0];
+                const id = parseInt(idStr);
+                if (!isNaN(id) && state.posts.find(p => p.id === id)) {
+                    // 确保导航高亮回到首页
+                    navLinks.forEach(link => {
+                        link.classList.toggle('active', link.dataset.page === 'home');
+                    });
+                    openPost(id, false);
+                } else {
+                    navigateTo('home', false);
+                }
+            } else {
+                navigateTo('home', false);
+            }
         }
 
         // ============================================================
@@ -1411,45 +1499,21 @@
         });
 
         // ============================================================
-        //  路由 (hash)
+        //  浏览器前进/后退
         // ============================================================
-        function handleHash() {
-            const hash = window.location.hash;
-            if (hash.startsWith('#post-')) {
-                const id = parseInt(hash.replace('#post-', ''));
-                if (!isNaN(id)) {
-                    const post = state.posts.find(p => p.id === id);
-                    if (post) {
-                        renderDetail(post);
-                        postListEl.style.display = 'none';
-                        paginationEl.style.display = 'none';
-                        document.querySelector('.search-box').style.display = 'none';
-                        document.querySelector('#pageHeader').style.display = 'none';
-                        return;
-                    }
-                }
-            }
-            if (state.view === 'list') {
-                postListEl.style.display = 'block';
-                paginationEl.style.display = 'flex';
-                document.querySelector('.search-box').style.display = 'flex';
-                document.querySelector('#pageHeader').style.display = 'block';
-            }
-        }
-
-        window.addEventListener('hashchange', handleHash);
+        window.addEventListener('popstate', handleRoute);
+        window.addEventListener('hashchange', () => {
+            // 仅本地 file:// 协议下用 hashchange 触发路由
+            if (isFileProtocol()) handleRoute();
+        });
 
         // ============================================================
         //  Back 按钮
         // ============================================================
         backBtn.addEventListener('click', () => {
-            closeDetail();
             const activeNav = document.querySelector('.nav-links a.active');
-            if (activeNav) {
-                navigateTo(activeNav.dataset.page);
-            } else {
-                applyFilters();
-            }
+            const page = activeNav ? activeNav.dataset.page : 'home';
+            navigateTo(page);
         });
 
         // ============================================================
@@ -1457,6 +1521,8 @@
         // ============================================================
         navLinks.forEach(link => {
             link.addEventListener('click', (e) => {
+                // 允许中键 / 新标签页打开
+                if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
                 e.preventDefault();
                 const page = link.dataset.page;
                 navigateTo(page);
@@ -1468,28 +1534,18 @@
         // ============================================================
         function init() {
             state.filteredPosts = [...state.posts];
-            renderPosts();
             renderSidebar();
-            handleHash();
-            if (state.view === 'list') {
-                postListEl.style.display = 'block';
-                paginationEl.style.display = 'flex';
-                document.querySelector('.search-box').style.display = 'flex';
-                document.querySelector('#pageHeader').style.display = 'block';
-            }
+            // 根据当前 URL 渲染对应页面
+            handleRoute();
         }
 
         init();
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && state.view === 'detail') {
-                closeDetail();
                 const activeNav = document.querySelector('.nav-links a.active');
-                if (activeNav) {
-                    navigateTo(activeNav.dataset.page);
-                } else {
-                    applyFilters();
-                }
+                const page = activeNav ? activeNav.dataset.page : 'home';
+                navigateTo(page);
             }
         });
 
