@@ -132,7 +132,7 @@
 <script>
 const source = document.getElementById('source');
 const preview = document.getElementById('preview');
-const status = document.getElementById('status');
+const statusEl = document.getElementById('status');
 
 let pyodide = null;
 
@@ -160,31 +160,51 @@ print("Hello Zarkdown!")
 
 async function init() {
   try {
+    statusEl.textContent = '正在加载 Pyodide...';
     pyodide = await loadPyodide();
-    status.textContent = '正在加载 Zarkdown 核心...';
+
+    statusEl.textContent = '正在准备运行环境...';
+
+    // 注入假的 webbrowser 模块，避免 core.py 里的 import webbrowser 失败
+    pyodide.runPython(`
+import sys, types
+fake_wb = types.ModuleType('webbrowser')
+fake_wb.open = lambda *a, **kw: None
+sys.modules['webbrowser'] = fake_wb
+`);
+
+    statusEl.textContent = '正在加载 Zarkdown 核心...';
 
     const resp = await fetch('https://raw.githubusercontent.com/yangzizhoudiwuxuande/zarkdown/main/src/zarkdown/core.py');
     if (!resp.ok) throw new Error('无法加载 core.py：' + resp.status);
-    const coreCode = await resp.text();
+    let coreCode = await resp.text();
 
-    // 关键修复：把 __name__ 设为非 __main__，避免触发 main() → sys.exit()
-    pyodide.globals.set('__name__', 'zarkdown_module');
+    // 剥离末尾的 if __name__ == "__main__": main()
+    const mainBlockStart = coreCode.indexOf('if __name__');
+    if (mainBlockStart !== -1) {
+      coreCode = coreCode.slice(0, mainBlockStart);
+    }
 
-    // 只执行到 main 定义之前，剥离末尾的 if __name__ == "__main__": main()
-    const safeCode = coreCode.replace(
-      /if\s+__name__\s*==\s*['"]__main__['"]\s*:\s*\n\s*main\s*\(\s*\)/,
-      ''
-    );
+    // 把代码写进一个真正的模块，确保函数进入全局命名空间
+    pyodide.runPython(`
+import types as _types
+_zk_mod = _types.ModuleType('_zk_mod')
+exec(${JSON.stringify(coreCode)}, _zk_mod.__dict__)
+zarkdown_to_html = _zk_mod.zarkdown_to_html
+`);
 
-    pyodide.runPython(safeCode);
+    // 验证函数已定义
+    const hasFn = pyodide.runPython('callable(globals().get("zarkdown_to_html"))');
+    if (!hasFn) {
+      throw new Error('zarkdown_to_html 未定义');
+    }
 
-    status.textContent = '✅ 就绪';
-    status.className = 'status ready';
-
+    statusEl.textContent = '✅ 就绪';
+    statusEl.className = 'status ready';
     loadExample();
   } catch (e) {
-    status.textContent = '❌ 加载失败: ' + e.message;
-    status.className = 'status error';
+    statusEl.textContent = '❌ 加载失败: ' + e.message;
+    statusEl.className = 'status error';
     console.error(e);
   }
 }
