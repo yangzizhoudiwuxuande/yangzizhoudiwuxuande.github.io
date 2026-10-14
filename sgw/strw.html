@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>搜官网 - Search the real web</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        header {
+            text-align: center;
+            padding: 40px 20px 20px;
+        }
+        .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+        }
+        .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .tagline {
+            color: #666;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+        main {
+            flex: 1;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 90%;
+        }
+        .search-box {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+        .search-box input {
+            width: 60%;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .search-box input:focus {
+            border-color: #007bff;
+        }
+        .search-box button {
+            padding: 12px 30px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .search-box button:hover {
+            background-color: #0056b3;
+        }
+        .hot-sites {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .hot-sites h2 {
+            font-size: 18px;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-left: 4px solid #007bff;
+            padding-left: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        .site-card {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s;
+        }
+        .site-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            border-color: #007bff;
+        }
+        .site-card .name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .site-card .url {
+            font-size: 12px;
+            color: #888;
+            word-break: break-all;
+        }
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 13px;
+            color: #888;
+            line-height: 1.8;
+        }
+        footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <!-- 手绘灯泡风格 SVG -->
+            <svg class="logo-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 10 C30 10 15 25 15 45 C15 60 25 70 30 80 L70 80 C75 70 85 60 85 45 C85 25 70 10 50 10 Z" fill="none" stroke="#333" stroke-width="4" stroke-linecap="round"/>
+                <rect x="35" y="80" width="30" height="10" rx="2" fill="none" stroke="#333" stroke-width="4"/>
+                <rect x="40" y="90" width="20" height="5" rx="2" fill="none" stroke="#333" stroke-width="4"/>
+                <text x="50" y="55" font-family="Arial" font-size="20" fill="#333" text-anchor="middle" font-weight="bold">Strw</text>
+            </svg>
+            <span class="logo-text">搜官网</span>
+        </div>
+        <div class="tagline">绝对真实 · 不误导 · 直接跳转</div>
+    </header>
+
+    <main>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜官网，如：B站、百度、Steam...">
+            <button onclick="performSearch()">官网一下</button>
+        </div>
+
+        <section class="hot-sites">
+            <h2>热门官网</h2>
+            <div class="grid" id="hotSitesGrid">
+                <!-- 动态生成，或直接写死 -->
+                <a href="https://store.steampowered.com" target="_blank" class="site-card">
+                    <span class="name">Steam</span><span class="url">store.steampowered.com</span>
+                </a>
+                <a href="https://www.baidu.com" target="_blank" class="site-card">
+                    <span class="name">百度</span><span class="url">baidu.com</span>
+                </a>
+                <a href="https://weixin.qq.com" target="_blank" class="site-card">
+                    <span class="name">微信</span><span class="url">weixin.qq.com</span>
+                </a>
+                <a href="https://www.sogou.com" target="_blank" class="site-card">
+                    <span class="name">搜狗</span><span class="url">sogou.com</span>
+                </a>
+                <a href="https://www.google.cn" target="_blank" class="site-card">
+                    <span class="name">Google</span><span class="url">google.cn</span>
+                </a>
+                <a href="https://www.apple.com.cn" target="_blank" class="site-card">
+                    <span class="name">苹果官网</span><span class="url">apple.com.cn</span>
+                </a>
+                <a href="https://www.microsoft.com" target="_blank" class="site-card">
+                    <span class="name">微软</span><span class="url">microsoft.com</span>
+                </a>
+                <a href="http://www.hqrw.com.cn" target="_blank" class="site-card">
+                    <span class="name">环球人物网</span><span class="url">hqrw.com.cn</span>
+                </a>
+                <a href="https://www.bilibili.com" target="_blank" class="site-card">
+                    <span class="name">哔哩哔哩</span><span class="url">bilibili.com</span>
+                </a>
+                <a href="https://www.douyin.com" target="_blank" class="site-card">
+                    <span class="name">抖音</span><span class="url">douyin.com</span>
+                </a>
+                <a href="https://www.youtube.com" target="_blank" class="site-card">
+                    <span class="name">YouTube</span><span class="url">youtube.com</span>
+                </a>
+                <a href="https://baike.baidu.com" target="_blank" class="site-card">
+                    <span class="name">百度百科</span><span class="url">baike.baidu.com</span>
+                </a>
+                <a href="https://zh.wikipedia.org" target="_blank" class="site-card">
+                    <span class="name">维基百科</span><span class="url">zh.wikipedia.org</span>
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>IP属地：地球 有问题？也许是月球</p>
+        <p>作者：yangzizhoudiwuxuande</p>
+        <p><a href="https://github.com/yangzizhoudiwuxuande" target="_blank">GitHub主页</a></p>
+    </footer>
+
+    <script>
+        // 基于 gw.txt 提取的核心网站数据
+        const siteData = {
+            "百度": "https://www.baidu.com",
+            "百度图片": "https://image.baidu.com",
+            "百度地图": "https://map.baidu.com",
+            "百度百科": "https://baike.baidu.com",
+            "搜狗": "https://www.sogou.com",
+            "360搜索": "https://www.so.com",
+            "谷歌": "https://www.google.cn",
+            "google": "https://www.google.cn",
+            "bing": "https://cn.bing.com",
+            "bilibili": "https://www.bilibili.com",
+            "b站": "https://www.bilibili.com",
+            "哔哩哔哩": "https://www.bilibili.com",
+            "chrome": "https://www.google.cn/chrome",
+            "谷歌浏览器": "https://www.google.cn/chrome",
+            "微信": "https://weixin.qq.com",
+            "wechat": "https://weixin.qq.com",
+            "抖音": "https://www.douyin.com",
+            "youtube": "https://www.youtube.com",
+            "steam": "https://store.steampowered.com",
+            "淘宝": "https://www.taobao.com",
+            "天猫": "https://www.tmall.com",
+            "京东": "https://www.jd.com",
+            "拼多多": "https://www.pinduoduo.com",
+            "苹果": "https://www.apple.com.cn",
+            "apple": "https://www.apple.com.cn",
+            "微软": "https://www.microsoft.com",
+            "microsoft": "https://www.microsoft.com",
+            "文心一言": "https://yiyan.baidu.com",
+            "chatgpt": "https://chatgpt.com",
+            "deepseek": "https://chat.deepseek.com",
+            "微博": "https://weibo.com",
+            "知乎": "https://www.zhihu.com",
+            "豆瓣": "https://www.douban.com",
+            "小红书": "https://www.xiaohongshu.com"
+        };
+
+        function performSearch() {
+            const input = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!input) return;
+
+            // 1. 尝试直接匹配
+            if (siteData[input]) {
+                window.location.href = siteData[input];
+                return;
+            }
+
+            // 2. 尝试模糊匹配（如输入“百度一下”匹配到“百度”）
+            let matchedUrl = null;
+            for (const key in siteData) {
+                if (input.includes(key) || key.includes(input)) {
+                    matchedUrl = siteData[key];
+                    break;
+                }
+            }
+
+            if (matchedUrl) {
+                window.location.href = matchedUrl;
+            } else {
+                // 3. 未匹配到，跳转 404.html
+                window.location.href = '404.html';
+            }
+        }
+
+        // 按回车搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    </script>
+</body>
+</html>
