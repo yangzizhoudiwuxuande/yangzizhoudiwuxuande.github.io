@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zarkdown 纯前端体验版</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    display: flex; height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1e1e2e; color: #cdd6f4;
+  }
+  #left { flex: 1; display: flex; flex-direction: column; border-right: 1px solid #313244; }
+  #right { flex: 1; background: #ffffff; overflow-y: auto; color: #1e1e2e; }
+  .toolbar {
+    padding: 10px 15px; background: #313244; display: flex;
+    justify-content: space-between; align-items: center; font-size: 13px;
+  }
+  .toolbar .title { font-weight: 600; }
+  .toolbar button {
+    background: #89b4fa; border: none; color: #1e1e2e; padding: 5px 14px;
+    border-radius: 4px; cursor: pointer; font-size: 12px; margin-left: 8px;
+  }
+  .toolbar button:hover { background: #b4befe; }
+  textarea {
+    flex: 1; padding: 20px; font-family: 'SF Mono', 'Fira Code', 'Menlo', monospace;
+    font-size: 14px; line-height: 1.6; background: #1e1e2e; color: #cdd6f4;
+    border: none; outline: none; resize: none; tab-size: 2;
+  }
+  
+  /* 预览区样式（完全还原 Zarkdown 输出风格） */
+  #preview {
+    padding: 30px 40px; max-width: 800px; margin: 0 auto; line-height: 1.7;
+  }
+  #preview h1 { border-bottom: 2px solid #eee; padding-bottom: 0.3em; margin-top: 1.2em; }
+  #preview h1, #preview h2, #preview h3, #preview h4 { margin-top: 1.2em; margin-bottom: 0.4em; color: #1e1e2f; }
+  #preview blockquote {
+    border-left: 4px solid #4a90d9; padding: 0.6em 1em; margin: 1em 0;
+    background: #f0f4ff; border-radius: 0 4px 4px 0; color: #2c3e50;
+  }
+  #preview pre { background: #f6f8fa; padding: 14px; border-radius: 6px; overflow-x: auto; margin: 1em 0; }
+  #preview code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.9em; background: #f0f0f0; padding: 2px 4px; border-radius: 4px; }
+  #preview pre code { background: transparent; padding: 0; }
+  #preview table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+  #preview th, #preview td { border: 1px solid #ddd; padding: 8px 12px; text-align: left; vertical-align: top; }
+  #preview th { background: #f2f2f2; font-weight: 600; }
+  #preview tr:nth-child(even) td { background: #f9f9f9; }
+  #preview hr { border: none; border-top: 2px dashed #ccc; margin: 2em 0; }
+  #preview img { max-width: 100%; height: auto; }
+  #preview sup { background: #eee; padding: 0.1em 0.4em; border-radius: 4px; font-size: 0.75em; cursor: help; }
+</style>
+</head>
+<body>
+  <div id="left">
+    <div class="toolbar">
+      <span class="title">📝 Zarkdown 纯前端版</span>
+      <div><button onclick="loadExample()">重置示例</button></div>
+    </div>
+    <textarea id="source" spellcheck="false" placeholder="在此输入 Zarkdown 代码..."></textarea>
+  </div>
+  <div id="right">
+    <div id="preview"></div>
+  </div>
+
+<script>
+// ==========================================
+// Zarkdown 纯 JS 解析核心
+// ==========================================
+
+// 1. 转义与反转义
+function escapeText(text) {
+  return text.replace(/\^([/\\?~\-*$|!<\[\]_])/g, (match, p1) => {
+    return `\x00ESC_${p1.charCodeAt(0)}\x00`;
+  });
+}
+function unescapeText(text) {
+  return text.replace(/\x00ESC_(\d+)\x00/g, (match, p1) => {
+    return String.fromCharCode(parseInt(p1, 10));
+  });
+}
+
+// 2. 行内解析器（递归处理嵌套）
+class InlineParser {
+  constructor(text) {
+    this.text = text;
+    this.pos = 0;
+    this.n = text.length;
+  }
+  parse() {
+    let parts = [];
+    while (this.pos < this.n) {
+      let ch = this.text[this.pos];
+      if (ch === '^') {
+        this.pos++;
+        if (this.pos < this.n) { parts.push(this.text[this.pos]); this.pos++; }
+        continue;
+      }
+      if (ch === '?') parts.push(this.parseUntil('?', '<strong>', '</strong>'));
+      else if (ch === '\\') parts.push(this.parseUntil('\\', '<i>', '</i>'));
+      else if (ch === '-') parts.push(this.parseUntil('-', '<del>', '</del>'));
+      else if (ch === '~') parts.push(this.parseUntil('~', '<code>', '</code>'));
+      else if (ch === '_') parts.push(this.parseUntil('_', '<u>', '</u>'));
+      else if (ch === '*') parts.push(this.parseLink());
+      else { parts.push(ch); this.pos++; }
+    }
+    return parts.join('');
+  }
+  parseUntil(endChar, openTag, closeTag) {
+    this.pos++; // 跳过起始符
+    let innerChars = [];
+    while (this.pos < this.n && this.text[this.pos] !== endChar) {
+      let ch = this.text[this.pos];
+      if (ch === '^') {
+        this.pos++;
+        if (this.pos < this.n) { innerChars.push(this.text[this.pos]); this.pos++; }
+        continue;
+      }
+      innerChars.push(ch); this.pos++;
+    }
+    if (this.pos < this.n && this.text[this.pos] === endChar) this.pos++;
+    let parsedInner = new InlineParser(innerChars.join('')).parse();
+    return `${openTag}${parsedInner}${closeTag}`;
+  }
+  parseLink() {
+    this.pos++; // 跳过 *
+    let textStart = this.pos;
+    while (this.pos < this.n && this.text[this.pos] !== '*') {
+      if (this.text[this.pos] === '^') { this.pos++; if (this.pos < this.n) this.pos++; continue; }
+      this.pos++;
+    }
+    if (this.pos >= this.n || this.text[this.pos] !== '*') {
+      return '*' + this.text.substring(textStart, this.pos);
+    }
+    let linkText = this.text.substring(textStart, this.pos);
+    this.pos++; // 跳过 *
+    if (this.pos < this.n && this.text[this.pos] === '(') {
+      this.pos++;
+      let urlStart = this.pos;
+      while (this.pos < this.n && this.text[this.pos] !== ')') this.pos++;
+      if (this.pos < this.n && this.text[this.pos] === ')') {
+        let url = this.text.substring(urlStart, this.pos);
+        this.pos++;
+        return `<a href="${url}">${new InlineParser(linkText).parse()}</a>`;
+      } else {
+        return '*' + linkText + '*(' + this.text.substring(urlStart, this.pos);
+      }
+    } else {
+      return '*' + linkText + '*';
+    }
+  }
+}
+
+// 3. 行内预处理（注释、脚注、图片）
+function parseInline(text) {
+  let escaped = escapeText(text);
+  // 注释
+  escaped = escaped.replace(/<([^>]+)>/g, (match, p1) => {
+    if (/https?:\/\/|ftp:\/\/|@/.test(p1)) return match;
+    return `<!-- ${p1} -->`;
+  });
+  // 脚注
+  escaped = escaped.replace(/\[(\d+)\]<([^>]+)>/g, (match, p1, p2) => {
+    return `<sup title="${p2}">[${p1}]</sup>`;
+  });
+  // 图片
+  escaped = escaped.replace(/\$(.+?)\$\(([^\)]+)\)/g, (match, p1, p2) => {
+    return `<img src="${p2}" alt="${p1}">`;
+  });
+  
+  let parser = new InlineParser(escaped);
+  return unescapeText(parser.parse());
+}
+
+// 4. 块级解析
+function zarkdownToHtml(text) {
+  let lines = text.split('\n');
+  let result = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    let rawLine = lines[i];
+    let escapedLine = escapeText(rawLine);
+
+    // 多行代码块
+    if (/^~[a-zA-Z0-9_]+$/.test(rawLine.trim())) {
+      let lang = rawLine.trim().substring(1);
+      let codeLines = [];
+      i++;
+      while (i < lines.length && lines[i].trim() !== '~') {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length && lines[i].trim() === '~') i++;
+      result.push(`<pre><code class="language-${lang}">${codeLines.join('\n')}</code></pre>`);
+      continue;
+    }
+
+    // 表格
+    if (/^\|.*\|$/.test(escapedLine) && i + 2 < lines.length) {
+      let nextEsc = escapeText(lines[i+1]);
+      let afterEsc = i+2 < lines.length ? escapeText(lines[i+2]) : '';
+      if (/^-{5,}$/.test(nextEsc.trim()) && /^\|.*\|$/.test(afterEsc)) {
+        let headers = escapedLine.split('|').slice(1, -1).map(s => s.trim());
+        let html = ['<table><thead><tr>'];
+        for (let h of headers) html.push(`<th>${parseInline(h)}</th>`);
+        html.push('</tr></thead><tbody>');
+        
+        let j = i + 2;
+        let currentCells = null;
+        let inDataRow = false;
+        while (j < lines.length) {
+          let curRaw = lines[j];
+          let curEsc = escapeText(curRaw);
+          let trimmed = curEsc.trim();
+          if (/^-{5,}$/.test(trimmed)) { j++; continue; }
+          if (/^\|.*\|$/.test(curEsc)) {
+            if (inDataRow && currentCells !== null) {
+              html.push('<tr>');
+              for (let cell of currentCells) html.push(`<td>${parseInline(cell)}</td>`);
+              html.push('</tr>');
+            }
+            let cells = curEsc.split('|').slice(1, -1).map(s => s.trim());
+            while (cells.length < headers.length) cells.push('');
+            currentCells = cells;
+            inDataRow = true;
+            j++;
+            continue;
+          } else if (inDataRow && curRaw.startsWith('  ')) {
+            if (currentCells && currentCells.length > 0) {
+              let content = curRaw.trimStart();
+              currentCells[currentCells.length - 1] += '[Z_BR]' + content;
+            }
+            j++;
+            continue;
+          } else {
+            break;
+          }
+        }
+        if (inDataRow && currentCells !== null) {
+          html.push('<tr>');
+          for (let cell of currentCells) html.push(`<td>${parseInline(cell)}</td>`);
+          html.push('</tr>');
+        }
+        html.push('</tbody></table>');
+        result.push(html.join(''));
+        i = j;
+        continue;
+      }
+    }
+
+    // 标题
+    if (/^\/\/\/\/ /.test(escapedLine)) result.push(`<h4>${parseInline(escapedLine.substring(5))}</h4>`);
+    else if (/^\/\/\/ /.test(escapedLine)) result.push(`<h3>${parseInline(escapedLine.substring(4))}</h3>`);
+    else if (/^\/\/ /.test(escapedLine)) result.push(`<h2>${parseInline(escapedLine.substring(3))}</h2>`);
+    else if (/^\/ /.test(escapedLine)) result.push(`<h1>${parseInline(escapedLine.substring(2))}</h1>`);
+    
+    // 无序列表
+    else if (escapedLine.startsWith('!')) {
+      let items = [];
+      while (i < lines.length && escapeText(lines[i]).startsWith('!')) {
+        items.push(`<li>${parseInline(escapeText(lines[i]).substring(1).trim())}</li>`);
+        i++;
+      }
+      result.push(`<ul>${items.join('')}</ul>`);
+      continue;
+    }
+
+    // 引用
+    else if (escapedLine.startsWith('|')) {
+      result.push(`<blockquote>${parseInline(escapedLine.substring(1).trim())}</blockquote>`);
+    }
+
+    // 分割线
+    else if (/^-{5,}$/.test(escapedLine.trim())) {
+      result.push('<hr>');
+    }
+
+    // 普通段落
+    else {
+      if (rawLine.trim()) result.push(`<p>${parseInline(escapedLine)}</p>`);
+      else result.push('');
+    }
+    i++;
+  }
+
+  let htmlContent = result.join('\n').replace(/\[Z_BR\]/g, '<br>');
+  return htmlContent;
+}
+
+// ==========================================
+// 界面逻辑
+// ==========================================
+const source = document.getElementById('source');
+const preview = document.getElementById('preview');
+
+const EXAMPLE = `/ Zarkdown 纯前端版本
+
+?恭喜?，你现在无需任何依赖即可运行！
+
+_这是下划线_ 和 -这是删除线-
+
+~javascript
+console.log("Hello Zarkdown!");
+~
+
+*点击访问*(https://github.com/yangzizhoudiwuxuande/zarkdown)
+
+| 特性 | 支持 |
+------
+| 嵌套语法 | ✅ |
+------
+| 极速加载 | ✅ |
+
+! 原生 JS 解析
+! 完全不依赖网络
+
+| 这是一段引用文字
+`;
+
+function convert() {
+  try {
+    preview.innerHTML = zarkdownToHtml(source.value);
+  } catch (e) {
+    preview.innerHTML = `<pre style="color:red;">解析错误: ${e.message}</pre>`;
+  }
+}
+
+function loadExample() {
+  source.value = EXAMPLE;
+  convert();
+}
+
+let timer;
+source.addEventListener('input', () => {
+  clearTimeout(timer);
+  timer = setTimeout(convert, 100);
+});
+
+// 初始化
+loadExample();
+</script>
+</body>
+</html>
