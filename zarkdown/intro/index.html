@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zarkdown - 键盘友好型纯文本标记语言</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+<style>
+    :root {
+        --bg: #0f0e1a;
+        --bg-soft: #1a1a2e;
+        --card: #161625;
+        --border: #2a2a44;
+        --text: #e5e5f0;
+        --text-dim: #9d9db5;
+        --text-muted: #6a6a8a;
+        --accent: #a29bfe;
+        --accent-2: #6c5ce7;
+        --green: #a6e3a1;
+        --yellow: #f9e2af;
+        --red: #f38ba8;
+        --mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', 'Menlo', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        overflow-x: hidden;
+    }
+
+    /* 背景光晕 */
+    body::before {
+        content: '';
+        position: fixed;
+        top: -20%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 1000px;
+        height: 600px;
+        background: radial-gradient(ellipse, rgba(108, 92, 231, 0.18), transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    /* ===== 导航 ===== */
+    nav {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        padding: 18px 0;
+        background: rgba(15, 14, 26, 0.8);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border-bottom: 1px solid var(--border);
+        z-index: 100;
+    }
+    .nav-inner {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .logo {
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .logo-icon {
+        display: inline-flex;
+        width: 28px;
+        height: 28px;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--accent-2), var(--accent));
+        border-radius: 6px;
+        font-family: var(--mono);
+        font-weight: 800;
+        color: #fff;
+        font-size: 16px;
+    }
+    .nav-links {
+        display: flex;
+        gap: 28px;
+        list-style: none;
+        align-items: center;
+    }
+    .nav-links a {
+        color: var(--text-dim);
+        text-decoration: none;
+        font-size: 0.92rem;
+        transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-cta {
+        padding: 8px 18px;
+        background: linear-gradient(135deg, var(--accent-2), var(--accent));
+        color: #fff !important;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: transform 0.2s, box-shadow 0.2s !important;
+    }
+    .nav-cta:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(108, 92, 231, 0.4);
+    }
+
+    /* ===== Hero ===== */
+    .hero {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 160px 24px 100px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 60px;
+        align-items: center;
+        position: relative;
+        z-index: 1;
+    }
+    .hero-text h1 {
+        font-size: 3.5rem;
+        line-height: 1.1;
+        font-weight: 800;
+        letter-spacing: -2px;
+        margin-bottom: 20px;
+    }
+    .gradient-text {
+        background: linear-gradient(135deg, var(--accent), #b4befe);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    .hero-text p {
+        font-size: 1.15rem;
+        color: var(--text-dim);
+        margin-bottom: 12px;
+    }
+    .hero-tagline {
+        font-family: var(--mono);
+        font-size: 0.9rem;
+        color: var(--accent);
+        margin-bottom: 36px;
+        display: inline-block;
+        padding: 6px 14px;
+        background: rgba(162, 155, 254, 0.1);
+        border: 1px solid rgba(162, 155, 254, 0.25);
+        border-radius: 20px;
+    }
+    .hero-buttons {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+    .btn {
+        padding: 12px 26px;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.2s;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, var(--accent-2), var(--accent));
+        color: #fff;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(108, 92, 231, 0.45);
+    }
+    .btn-secondary {
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+    .btn-secondary:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+    }
+
+    /* ===== 编辑器演示 ===== */
+    .demo {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        transform: perspective(1000px) rotateY(-6deg) rotateX(2deg);
+        transition: transform 0.4s;
+    }
+    .demo:hover {
+        transform: perspective(1000px) rotateY(0) rotateX(0);
+    }
+    .demo-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background: var(--bg-soft);
+        border-bottom: 1px solid var(--border);
+    }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot.red { background: #ff5f56; }
+    .dot.yellow { background: #ffbd2e; }
+    .dot.green { background: #27c93f; }
+    .demo-title {
+        margin-left: 10px;
+        font-family: var(--mono);
+        font-size: 0.78rem;
+        color: var(--text-muted);
+    }
+    .demo-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 340px;
+    }
+    .demo-code {
+        padding: 20px;
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        line-height: 1.9;
+        border-right: 1px solid var(--border);
+        white-space: pre;
+        overflow-x: auto;
+    }
+    .demo-preview {
+        padding: 20px;
+        font-size: 0.82rem;
+        background: #fafafa;
+        color: #1e1e2f;
+        overflow-y: auto;
+    }
+    .demo-preview h1 { font-size: 1.1rem; margin-bottom: 8px; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+    .demo-preview h2 { font-size: 0.95rem; margin: 10px 0 6px; }
+    .demo-preview p { margin-bottom: 6px; }
+    .demo-preview strong { color: #1e1e2f; }
+    .demo-preview blockquote {
+        border-left: 3px solid var(--accent);
+        padding-left: 10px;
+        color: #555;
+        margin: 8px 0;
+        font-size: 0.8rem;
+    }
+    .tok-h { color: #89b4fa; }
+    .tok-bold { color: var(--yellow); }
+    .tok-italic { color: var(--accent); }
+    .tok-del { color: var(--red); }
+    .tok-link { color: var(--green); }
+    .tok-code { color: #fab387; }
+    .tok-text { color: var(--text); }
+    .tok-muted { color: var(--text-muted); }
+
+    /* ===== 区块通用 ===== */
+    section {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 80px 24px;
+        position: relative;
+        z-index: 1;
+    }
+    .section-title {
+        text-align: center;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -1px;
+        margin-bottom: 12px;
+    }
+    .section-sub {
+        text-align: center;
+        color: var(--text-dim);
+        margin-bottom: 54px;
+        font-size: 1rem;
+    }
+
+    /* ===== 特性 ===== */
+    .features {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+    .feature {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 28px;
+        transition: all 0.3s;
+    }
+    .feature:hover {
+        border-color: var(--accent);
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+    }
+    .feature-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: rgba(162, 155, 254, 0.12);
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        margin-bottom: 16px;
+    }
+    .feature h3 {
+        font-size: 1.05rem;
+        margin-bottom: 8px;
+    }
+    .feature p {
+        color: var(--text-dim);
+        font-size: 0.88rem;
+    }
+
+    /* ===== 语法对比 ===== */
+    .syntax-compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .syntax-box {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .syntax-box-header {
+        padding: 14px 20px;
+        background: var(--bg-soft);
+        border-bottom: 1px solid var(--border);
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .syntax-box-body {
+        padding: 20px;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        line-height: 2;
+        white-space: pre;
+        overflow-x: auto;
+    }
+    .badge-old {
+        background: rgba(243, 139, 168, 0.15);
+        color: var(--red);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    .badge-new {
+        background: rgba(166, 227, 161, 0.15);
+        color: var(--green);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+
+    /* ===== 语法速查表 ===== */
+    .syntax-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card);
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        font-size: 0.88rem;
+    }
+    .syntax-table th, .syntax-table td {
+        padding: 12px 18px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+    .syntax-table th {
+        background: var(--bg-soft);
+        font-weight: 600;
+        color: var(--text-dim);
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .syntax-table tr:last-child td { border-bottom: none; }
+    .syntax-table tr:hover td { background: rgba(162, 155, 254, 0.04); }
+    .syntax-table code {
+        font-family: var(--mono);
+        background: rgba(162, 155, 254, 0.1);
+        color: var(--accent);
+        padding: 3px 8px;
+        border-radius: 5px;
+        font-size: 0.82rem;
+    }
+    .syntax-table .desc { color: var(--text-dim); }
+
+    /* ===== 安装 ===== */
+    .install-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    .install-card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 24px;
+    }
+    .install-card h4 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+        font-size: 1rem;
+    }
+    .install-card .tag {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        background: rgba(162, 155, 254, 0.15);
+        color: var(--accent);
+        font-weight: 600;
+    }
+    .code-block {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px 18px;
+        font-family: var(--mono);
+        font-size: 0.82rem;
+        color: var(--text);
+        overflow-x: auto;
+        position: relative;
+    }
+    .code-block .prompt { color: var(--accent); }
+    .code-block .comment { color: var(--text-muted); }
+    .copy-btn {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: var(--bg-soft);
+        border: 1px solid var(--border);
+        color: var(--text-muted);
+        padding: 4px 10px;
+        border-radius: 5px;
+        font-size: 0.7rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .copy-btn:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    /* ===== CTA 区域 ===== */
+    .cta-section {
+        text-align: center;
+        padding: 100px 24px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    .cta-section h2 {
+        font-size: 2.2rem;
+        font-weight: 800;
+        letter-spacing: -1px;
+        margin-bottom: 16px;
+    }
+    .cta-section p {
+        color: var(--text-dim);
+        margin-bottom: 32px;
+        font-size: 1.05rem;
+    }
+
+    /* ===== Footer ===== */
+    footer {
+        border-top: 1px solid var(--border);
+        padding: 40px 24px;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        position: relative;
+        z-index: 1;
+    }
+    footer .socials {
+        display: flex;
+        justify-content: center;
+        gap: 22px;
+        margin-bottom: 16px;
+    }
+    footer .socials a {
+        color: var(--text-muted);
+        font-size: 1.3rem;
+        transition: color 0.2s, transform 0.2s;
+    }
+    footer .socials a:hover {
+        color: var(--accent);
+        transform: translateY(-3px);
+    }
+    footer .tagline {
+        color: var(--text-dim);
+        font-family: var(--mono);
+        font-size: 0.78rem;
+    }
+
+    /* ===== 动画 ===== */
+    .fade-in {
+        opacity: 0;
+        transform: translateY(24px);
+        transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* ===== 响应式 ===== */
+    @media (max-width: 900px) {
+        .hero {
+            grid-template-columns: 1fr;
+            padding: 130px 24px 60px;
+            gap: 40px;
+        }
+        .hero-text h1 { font-size: 2.6rem; }
+        .demo { transform: none; }
+        .features { grid-template-columns: 1fr 1fr; }
+        .syntax-compare { grid-template-columns: 1fr; }
+        .install-grid { grid-template-columns: 1fr; }
+        .nav-links { gap: 16px; }
+        .nav-links a:not(.nav-cta) { display: none; }
+    }
+    @media (max-width: 600px) {
+        .hero-text h1 { font-size: 2.1rem; }
+        .demo-body { grid-template-columns: 1fr; }
+        .demo-code { border-right: none; border-bottom: 1px solid var(--border); }
+        .features { grid-template-columns: 1fr; }
+        .section-title { font-size: 1.6rem; }
+        .cta-section h2 { font-size: 1.7rem; }
+        .syntax-table th, .syntax-table td { padding: 10px 12px; font-size: 0.8rem; }
+    }
+</style>
+</head>
+<body>
+
+<!-- 导航 -->
+<nav>
+    <div class="nav-inner">
+        <div class="logo">
+            <span class="logo-icon">/</span>
+            Zarkdown
+        </div>
+        <ul class="nav-links">
+            <li><a href="#features">特性</a></li>
+            <li><a href="#syntax">语法</a></li>
+            <li><a href="#install">安装</a></li>
+            <li><a href="https://yangzizhoudiwuxuande.github.io/zarkdown/" class="nav-cta" target="_blank">
+                <i class="fas fa-bolt"></i> 在线体验
+            </a></li>
+        </ul>
+    </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+    <div class="hero-text">
+        <span class="hero-tagline">// 纯文本 · 极简 · 高效</span>
+        <h1>键盘友好的<br><span class="gradient-text">标记语言</span></h1>
+        <p>所有语法符号都在键盘主键区，无需按 Shift 键。</p>
+        <p>用 <code style="font-family:var(--mono);background:rgba(162,155,254,.1);padding:2px 8px;border-radius:5px;color:var(--accent);">/</code> 写标题，用 <code style="font-family:var(--mono);background:rgba(162,155,254,.1);padding:2px 8px;border-radius:5px;color:var(--accent);">?</code> 加粗，让写作一气呵成。</p>
+        <div class="hero-buttons" style="margin-top:32px;">
+            <a href="https://github.com/yangzizhoudiwuxuande/zarkdown" class="btn btn-primary" target="_blank">
+                <i class="fab fa-github"></i> GitHub
+            </a>
+            <a href="#install" class="btn btn-secondary">
+                <i class="fas fa-download"></i> 立即安装
+            </a>
+        </div>
+    </div>
+
+    <!-- 编辑器模拟 -->
+    <div class="demo">
+        <div class="demo-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="demo-title">hello.zkdn</span>
+        </div>
+        <div class="demo-body">
+            <div class="demo-code"><span class="tok-h">/ Zarkdown 演示</span>
+
+<span class="tok-bold">?这是粗体?</span> <span class="tok-text">和</span> <span class="tok-italic">\这是斜体\</span>
+
+<span class="tok-del">-这是删除线-</span>
+
+<span class="tok-link">*点击访问*(https://github.com)</span>
+
+<span class="tok-text">! 列表项一</span>
+<span class="tok-text">! 列表项二</span>
+
+<span class="tok-code">| 这是一段引用文字</span></div>
+            <div class="demo-preview">
+                <h1>Zarkdown 演示</h1>
+                <p><strong>这是粗体</strong> 和 <em>这是斜体</em></p>
+                <p style="text-decoration:line-through;color:#888;">这是删除线</p>
+                <p><a href="#" style="color:#6c5ce7;">点击访问</a></p>
+                <p>• 列表项一</p>
+                <p>• 列表项二</p>
+                <blockquote>这是一段引用文字</blockquote>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 特性 -->
+<section id="features">
+    <h2 class="section-title fade-in">为什么选择 Zarkdown？</h2>
+    <p class="section-sub fade-in">为键盘而生的标记语言</p>
+    <div class="features">
+        <div class="feature fade-in">
+            <div class="feature-icon"><i class="fas fa-keyboard"></i></div>
+            <h3>键盘友好</h3>
+            <p>所有符号都在主键区，无需按 Shift 组合键。写作时手指不需要大范围移动。</p>
+        </div>
+        <div class="feature fade-in">
+            <div class="feature-icon"><i class="fas fa-brain"></i></div>
+            <h3>直观易记</h3>
+            <p><code>/</code> 像路径层级表示标题，<code>?</code> 像强调语气表示粗体，符号与语义强关联。</p>
+        </div>
+        <div class="feature fade-in">
+            <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+            <h3>无歧义</h3>
+            <p>每个符号有明确唯一的用途，不会出现同一符号在不同上下文中表示不同含义。</p>
+        </div>
+        <div class="feature fade-in">
+            <div class="feature-icon"><i class="fas fa-file-alt"></i></div>
+            <h3>纯文本</h3>
+            <p>任何文本编辑器都能打开，人类可读性强，即使不渲染也能理解结构。</p>
+        </div>
+        <div class="feature fade-in">
+            <div class="feature-icon"><i class="fas fa-layer-group"></i></div>
+            <h3>功能完整</h3>
+            <p>支持标题、粗体、斜体、下划线、删除线、超链接、图片、代码块、表格、脚注等。</p>
+        </div>
+        <div class="feature fade-in">
+            <div class="feature-icon"><i class="fas fa-file-export"></i></div>
+            <h3>多格式导出</h3>
+            <p>一键导出 HTML、PDF、Word、LaTeX，满足不同发布场景。</p>
+        </div>
+    </div>
+</section>
+
+<!-- 语法对比 -->
+<section id="syntax">
+    <h2 class="section-title fade-in">与 Markdown 的对比</h2>
+    <p class="section-sub fade-in">更少的按键，更流畅的写作</p>
+    <div class="syntax-compare">
+        <div class="syntax-box fade-in">
+            <div class="syntax-box-header">
+                <span class="badge-old">Markdown</span>
+                需要 Shift 组合键
+            </div>
+            <div class="syntax-box-body"><span class="tok-muted">#</span> 一级标题
+<span class="tok-muted">##</span> 二级标题
+
+<span class="tok-muted">**</span>粗体<span class="tok-muted">**</span>
+<span class="tok-muted">*</span>斜体<span class="tok-muted">*</span>
+<span class="tok-muted">~~</span>删除线<span class="tok-muted">~~</span>
+
+<span class="tok-muted">[</span>链接<span class="tok-muted">](url)</span></div>
+        </div>
+        <div class="syntax-box fade-in">
+            <div class="syntax-box-header">
+                <span class="badge-new">Zarkdown</span>
+                全部主键区
+            </div>
+            <div class="syntax-box-body"><span class="tok-h">/</span> 一级标题
+<span class="tok-h">//</span> 二级标题
+
+<span class="tok-bold">?</span>粗体<span class="tok-bold">?</span>
+<span class="tok-italic">\</span>斜体<span class="tok-italic">\</span>
+<span class="tok-del">-</span>删除线<span class="tok-del">-</span>
+
+<span class="tok-link">*</span>链接<span class="tok-link">*</span>(url)</div>
+        </div>
+    </div>
+</section>
+
+<!-- 语法速查 -->
+<section>
+    <h2 class="section-title fade-in">语法速查</h2>
+    <p class="section-sub fade-in">常用语法一览</p>
+    <table class="syntax-table fade-in">
+        <thead>
+            <tr>
+                <th>效果</th>
+                <th>语法</th>
+                <th>示例</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>标题 1-4 级</td><td><code>/</code> <code>//</code> <code>///</code> <code>////</code></td><td class="desc">/ 大标题</td></tr>
+            <tr><td>粗体</td><td><code>?文字?</code></td><td class="desc">?重要?</td></tr>
+            <tr><td>斜体</td><td><code>\文字\</code></td><td class="desc">\斜体\</td></tr>
+            <tr><td>下划线</td><td><code>_文字_</code></td><td class="desc">_下划线_</td></tr>
+            <tr><td>删除线</td><td><code>-文字-</code></td><td class="desc">-删掉-</td></tr>
+            <tr><td>超链接</td><td><code>*文字*(链接)</code></td><td class="desc">*点击*(https://x.com)</td></tr>
+            <tr><td>图片</td><td><code>$名称$(链接)</code></td><td class="desc">$logo$(./pic.png)</td></tr>
+            <tr><td>行内代码</td><td><code>~代码~</code></td><td class="desc">~npm i~</td></tr>
+            <tr><td>无序列表</td><td><code>!文字</code></td><td class="desc">!苹果</td></tr>
+            <tr><td>引用</td><td><code>|文字</code></td><td class="desc">| 引文</td></tr>
+            <tr><td>表格</td><td><code>| 表头 |</code> + <code>------</code></td><td class="desc">见文档</td></tr>
+            <tr><td>转义</td><td><code>^符号</code></td><td class="desc">^/ 不是标题</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- 安装 -->
+<section id="install">
+    <h2 class="section-title fade-in">快速开始</h2>
+    <p class="section-sub fade-in">选择你喜欢的方式安装</p>
+    <div class="install-grid">
+        <div class="install-card fade-in">
+            <h4><i class="fab fa-python" style="color:#3776AB;"></i> 使用 pip 安装 <span class="tag">推荐</span></h4>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this, 'pip install zarkdown')">复制</button><span class="prompt">$</span> pip install zarkdown</div>
+        </div>
+        <div class="install-card fade-in">
+            <h4><i class="fab fa-apple" style="color:#fff;"></i> 使用 Homebrew (macOS)</h4>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this, 'brew tap yangzizhoudiwuxuande/zarkdown\nbrew install zarkdown')">复制</button><span class="prompt">$</span> brew tap yangzizhoudiwuxuande/zarkdown
+<span class="prompt">$</span> brew install zarkdown</div>
+        </div>
+    </div>
+
+    <h4 style="margin-top:40px; margin-bottom:14px; font-size:1rem; color:var(--text-dim);">基本用法</h4>
+    <div class="code-block fade-in" style="padding:20px 24px;">
+        <button class="copy-btn" onclick="copyCode(this, 'zarkdown example.zkdn -o example.html')">复制</button>
+<span class="comment"># 转换 .zkdn 文件为 HTML</span>
+<span class="prompt">$</span> zarkdown example.zkdn -o example.html
+
+<span class="comment"># 实时预览（保存即刷新）</span>
+<span class="prompt">$</span> zarkdown example.zkdn -w
+
+<span class="comment"># 导出为 PDF（需安装 Pandoc）</span>
+<span class="prompt">$</span> zarkdown example.zkdn -f pdf
+    </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+    <h2 class="fade-in">准备好开始了吗？</h2>
+    <p class="fade-in">在浏览器里直接体验 Zarkdown，无需安装。</p>
+    <div class="hero-buttons fade-in" style="justify-content:center;">
+        <a href="https://yangzizhoudiwuxuande.github.io/zarkdown/" class="btn btn-primary" target="_blank">
+            <i class="fas fa-bolt"></i> 在线体验
+        </a>
+        <a href="https://github.com/yangzizhoudiwuxuande/zarkdown" class="btn btn-secondary" target="_blank">
+            <i class="fab fa-github"></i> 查看源码
+        </a>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer>
+    <div class="socials">
+        <a href="https://github.com/yangzizhoudiwuxuande" target="_blank" title="GitHub"><i class="fab fa-github"></i></a>
+        <a href="https://github.com/yangzizhoudiwuxuande/zarkdown" target="_blank" title="Zarkdown 仓库"><i class="fas fa-book"></i></a>
+        <a href="https://yangzizhoudiwuxuande.github.io/zarkdown/" target="_blank" title="在线体验"><i class="fas fa-bolt"></i></a>
+        <a href="mailto:yangzizhou2026@outlook.com" title="邮箱"><i class="fas fa-envelope"></i></a>
+    </div>
+    <p class="tagline">// Happy Writing with Zarkdown</p>
+    <p style="margin-top:8px;">&copy; 2026 Zarkdown · MIT License · QQ群 1106476845</p>
+</footer>
+
+<script>
+    // 滚动淡入动画
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+    // 复制代码
+    function copyCode(btn, text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const original = btn.textContent;
+            btn.textContent = '已复制 ✓';
+            setTimeout(() => { btn.textContent = original; }, 1500);
+        }).catch(() => {
+            btn.textContent = '复制失败';
+            setTimeout(() => { btn.textContent = '复制'; }, 1500);
+        });
+    }
+</script>
+</body>
+</html>
