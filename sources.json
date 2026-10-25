@@ -1,0 +1,20 @@
+{
+  "name": "暖阅源",
+  "identifier": "com.yangfajun.nuanyue.source",
+  "subtitle": "yangfajun 的个人源",
+  "apps": [
+    {
+      "name": "暖阅",
+      "bundleIdentifier": "com.yangfajun.nuanyue",
+      "developerName": "yangfajun",
+      "versions": [
+        {
+          "version": "1.2",
+          "date": "2026-10-25",
+          "downloadURL": "https://yangzizhoudiwuxuande.github.io/Reader.ipa",
+          "size": 462000
+        }
+      ]
+    }
+  ]
+}
