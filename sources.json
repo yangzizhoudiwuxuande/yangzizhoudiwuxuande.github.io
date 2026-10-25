@@ -2,6 +2,7 @@
   "name": "暖阅源",
   "identifier": "com.yangfajun.nuanyue.source",
   "subtitle": "yangfajun 的个人源",
+  "iconURL": "https://yangzizhoudiwuxuande.github.io/icon.png",
   "apps": [
     {
       "name": "暖阅",
