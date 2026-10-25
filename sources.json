@@ -7,10 +7,16 @@
       "name": "暖阅",
       "bundleIdentifier": "com.yangfajun.nuanyue",
       "developerName": "yangfajun",
+      "subtitle": "纯净轻量的本地小说阅读工具",
+      "localizedDescription": "暖阅是一款专为沉浸式阅读打造的纯净阅读器。支持本地书籍导入、字体调节与背景切换，无广告干扰，让每一次阅读都更加专注舒适。",
+      "iconURL": "https://yangzizhoudiwuxuande.github.io/icon.png",
+      "downloadURL": "https://yangzizhoudiwuxuande.github.io/Reader.ipa",
+      "size": 462000,
       "versions": [
         {
           "version": "1.2",
           "date": "2026-10-25",
+          "localizedDescription": "首个发布版本，优化了本地书籍的导入与加载速度。",
           "downloadURL": "https://yangzizhoudiwuxuande.github.io/Reader.ipa",
           "size": 462000
         }
