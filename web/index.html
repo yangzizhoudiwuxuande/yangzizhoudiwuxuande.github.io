@@ -2,11 +2,11 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>WebOS · 网页操作系统</title>
 <style>
 /* ==================== 基础 ==================== */
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-touch-callout: none; }
 :root {
   --accent: #4f7cff;
   --bar-h: 56px;
@@ -58,7 +58,7 @@ button { font-family: inherit; cursor: pointer; }
 .titlebar {
   height: 36px; flex: 0 0 36px; display: flex; align-items: center; gap: 8px;
   padding: 0 6px 0 12px; background: linear-gradient(to bottom, rgba(255,255,255,.09), rgba(255,255,255,.03));
-  border-bottom: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.08); touch-action: none;
 }
 .t-ico { font-size: 15px; }
 .t-title { flex: 1; font-size: 13px; color: #dfe4ee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -67,14 +67,14 @@ button { font-family: inherit; cursor: pointer; }
 .wbtn:hover { background: rgba(255,255,255,.14); color: #fff; }
 .wbtn.close:hover { background: #e5484d; color: #fff; }
 
-.win-body { flex: 1; overflow: auto; position: relative; font-size: 13px; }
+.win-body { flex: 1; overflow: auto; position: relative; font-size: 13px; touch-action: pan-y; }
 .win-body::-webkit-scrollbar { width: 10px; height: 10px; }
 .win-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 6px; }
 
 .resizer {
   position: absolute; right: 0; bottom: 0; width: 16px; height: 16px;
   cursor: nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,.35) 50%);
-  border-bottom-right-radius: 10px;
+  border-bottom-right-radius: 10px; touch-action: none;
 }
 
 /* ==================== 任务栏 ==================== */
@@ -144,17 +144,21 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ==================== 各应用样式 ==================== */
 .app-notepad { display: flex; flex-direction: column; height: 100%; }
-.app-notepad textarea { flex: 1; width: 100%; padding: 12px; border: none; outline: none; resize: none; background: transparent; color: #e8eaf0; font-family: monospace; }
+.pad-bar { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
+.app-notepad textarea { flex: 1; width: 100%; padding: 12px; border: none; outline: none; resize: none; background: transparent; color: #e8eaf0; font-family: monospace; font-size: 14px; }
+
 .calc { display: flex; flex-direction: column; height: 100%; }
-.calc-screen { padding: 14px; text-align: right; background: rgba(0,0,0,.28); border-bottom: 1px solid rgba(255,255,255,.07); }
-.calc-res { font-size: 30px; font-weight: 600; }
-.calc-keys { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
-.calc-keys button { border: none; border-radius: 8px; background: rgba(255,255,255,.08); color: #e8eaf0; font-size: 16px; }
+.calc-screen { padding: 14px 18px; text-align: right; background: rgba(0,0,0,.28); border-bottom: 1px solid rgba(255,255,255,.07); display: flex; flex-direction: column; justify-content: center; }
+.calc-expr { font-size: 14px; color: var(--text-dim); min-height: 20px; word-break: break-all; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.calc-res { font-size: 32px; font-weight: 600; min-height: 38px; }
+.calc-keys { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; }
+.calc-keys button { border: none; border-radius: 8px; background: rgba(255,255,255,.08); color: #e8eaf0; font-size: 20px; font-weight: 500; transition: background 0.1s; }
 .calc-keys button:hover { background: rgba(255,255,255,.17); }
+.calc-keys button:active { transform: scale(0.95); background: rgba(255,255,255,.25); }
 
 .music-app { display: flex; flex-direction: column; height: 100%; background: linear-gradient(180deg, #2b2e3b 0%, #1a1c24 100%); }
 .music-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 15px; }
-.music-cover { width: 140px; height: 140px; border-radius: 50%; background: #111; display: grid; place-items: center; font-size: 60px; }
+.music-cover { width: 140px; height: 140px; border-radius: 50%; background: #111; display: grid; place-items: center; font-size: 60px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
 
 .settings { padding: 18px 20px; }
 .settings h3 { font-size: 12px; font-weight: 600; color: var(--text-dim); margin: 0 0 10px; }
@@ -212,13 +216,13 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 /* =========================================================
-   1. 虚拟文件系统 (支持文本与 Blob URL)
+   1. 虚拟文件系统
    ========================================================= */
 const FS = {
   type: 'dir',
   children: {
     home: { type: 'dir', children: { guest: { type: 'dir', children: {
-      'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以尝试上传图片、PDF、音频或视频，双击即可自动调用相应的查看器打开。' },
+      'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以直接在这里编辑文本，然后点击左上角的“保存”按钮写回文件。' },
       documents: { type: 'dir', children: {} }
     }}}}
   }
@@ -255,7 +259,7 @@ function getParent(path) {
 }
 
 /* =========================================================
-   2. 全局应用注册表 (必须放在应用定义之前)
+   2. 全局应用注册表
    ========================================================= */
 const APPS = {};
 
@@ -404,7 +408,7 @@ function openApp(appId, arg) {
 }
 
 /* =========================================================
-   4. 独立文件查看器 (图片/PDF/媒体)
+   4. 独立文件查看器
    ========================================================= */
 APPS.imageviewer = {
   name: '图片查看器', icon: '🖼️', width: 640, height: 480,
@@ -605,7 +609,8 @@ APPS.files = {
             } else if (mime.startsWith('video/') || ['mp4','webm','mkv'].includes(ext)) {
               openApp('mediaplayer', { type: 'video', fileNode: n });
             } else {
-              openApp('notepad', { content: n.content || '' });
+              // 传入文件真实路径，供记事本保存使用
+              openApp('notepad', { path: `${cwd}/${name}`, content: n.content || '' });
             }
           }
         };
@@ -660,9 +665,42 @@ APPS.files = {
 APPS.notepad = {
   name: '记事本', icon: '📝', width: 580, height: 440,
   mount(body, win, arg) {
-    body.innerHTML = `<div class="app-notepad"><textarea spellcheck="false" placeholder="输入内容…"></textarea></div>`;
+    body.innerHTML = `
+      <div class="app-notepad">
+        <div class="pad-bar">
+          <button class="btn primary" data-a="save">保存</button>
+          <span style="font-size:12px;color:#888;margin-left:10px;">${arg && arg.path ? arg.path : '未命名文件'}</span>
+        </div>
+        <textarea spellcheck="false" placeholder="输入内容…"></textarea>
+      </div>`;
     const ta = body.querySelector('textarea');
     ta.value = (arg && arg.content) || '';
+    let filePath = arg && arg.path;
+
+    body.querySelector('[data-a="save"]').onclick = () => {
+      if (!filePath) {
+        const name = prompt('请输入文件名（例如 test.txt）：');
+        if (!name) return;
+        filePath = `/home/guest/${name}`;
+        body.querySelector('.pad-bar span').textContent = filePath;
+      }
+      
+      const par = getParent(filePath);
+      if (par && par.parent) {
+        if (par.parent.children[par.name]) {
+          par.parent.children[par.name].content = ta.value;
+          par.parent.children[par.name].mime = 'text/plain';
+        } else {
+          par.parent.children[par.name] = { type: 'file', content: ta.value, mime: 'text/plain' };
+        }
+        // 视觉提示保存成功
+        const btn = body.querySelector('[data-a="save"]');
+        const oldText = btn.textContent;
+        btn.textContent = '已保存!';
+        btn.style.background = '#22c55e';
+        setTimeout(() => { btn.textContent = oldText; btn.style.background = 'var(--accent)'; }, 1500);
+      }
+    };
   }
 };
 
@@ -671,30 +709,77 @@ APPS.calc = {
   mount(body) {
     body.innerHTML = `
       <div class="calc">
-        <div class="calc-screen"><div class="calc-res">0</div></div>
+        <div class="calc-screen">
+          <div class="calc-expr"></div>
+          <div class="calc-res">0</div>
+        </div>
         <div class="calc-keys"></div>
       </div>`;
-    const resEl = body.querySelector('.calc-res'), keysEl = body.querySelector('.calc-keys');
+    const exprEl = body.querySelector('.calc-expr'), resEl = body.querySelector('.calc-res'), keysEl = body.querySelector('.calc-keys');
     const KEYS = ['C','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','(', '0','.',')','='];
     let expr = '';
+    
     const evalExpr = (s) => {
       const clean = s.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
+      if (/\/0(?!\d)/.test(clean)) throw new Error('Divide by zero');
       const val = Function('"use strict"; return (' + clean + ')')();
       return Math.round(val * 1e10) / 1e10;
     };
-    const press = (v) => {
-      if (v === 'C') { expr = ''; resEl.textContent = '0'; return; }
-      if (v === '±') { expr = expr ? '-(' + expr + ')' : '-'; }
-      else if (v === '=') {
-        try { expr = String(evalExpr(expr)); resEl.textContent = expr; } 
-        catch { resEl.textContent = '错误'; expr = ''; }
+
+    const updateScreen = () => {
+      exprEl.textContent = expr;
+      if (!expr) {
+        resEl.textContent = '0';
         return;
-      } else expr += v;
-      try { resEl.textContent = String(evalExpr(expr)); } catch { resEl.textContent = expr.match(/[0-9.]+$/)?.[0] || '0'; }
+      }
+      try {
+        const v = evalExpr(expr);
+        resEl.textContent = String(v);
+      } catch {
+        resEl.textContent = expr.match(/[0-9.]+$/)?.[0] || '0';
+      }
     };
+
+    const press = (v) => {
+      if (v === 'C') { expr = ''; updateScreen(); return; }
+      if (v === '±') { 
+        if (!expr) expr = '-';
+        else if (/[0-9.]+$/.test(expr)) expr = expr.replace(/([0-9.]+)$/, '(-$1)');
+        updateScreen(); return; 
+      }
+      if (v === '=') {
+        if (!expr) return;
+        try {
+          const v2 = evalExpr(expr);
+          expr = String(v2);
+          exprEl.textContent = ''; 
+          resEl.textContent = expr;
+        } catch {
+          resEl.textContent = '错误';
+          expr = '';
+        }
+        return;
+      }
+      
+      const ops = ['+', '-', '*', '/', '%'];
+      const isOp = ops.includes(v);
+      const lastIsOp = ops.includes(expr.slice(-1));
+      if (isOp && lastIsOp) {
+        expr = expr.slice(0, -1);
+      }
+      
+      expr += v;
+      updateScreen();
+    };
+    
     KEYS.forEach(k => {
       const b = document.createElement('button'); b.textContent = k;
-      b.onclick = () => press(k === '×' ? '*' : k === '÷' ? '/' : k === '−' ? '-' : k);
+      b.onclick = () => {
+        if (k === '×') press('*');
+        else if (k === '÷') press('/');
+        else if (k === '−') press('-');
+        else press(k);
+      };
       keysEl.appendChild(b);
     });
   }
