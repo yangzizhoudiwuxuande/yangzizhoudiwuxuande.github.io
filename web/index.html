@@ -155,19 +155,14 @@ button { font-family: inherit; cursor: pointer; }
 .music-app { display: flex; flex-direction: column; height: 100%; background: linear-gradient(180deg, #2b2e3b 0%, #1a1c24 100%); }
 .music-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 15px; }
 .music-cover { width: 140px; height: 140px; border-radius: 50%; background: #111; display: grid; place-items: center; font-size: 60px; }
-.music-controls { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 15px; }
-.music-btn { background: transparent; border: none; color: #fff; font-size: 24px; }
-.music-btn.play { font-size: 32px; }
 
 .settings { padding: 18px 20px; }
 .settings h3 { font-size: 12px; font-weight: 600; color: var(--text-dim); margin: 0 0 10px; }
 .settings h3:not(:first-child) { margin-top: 24px; }
 .wall-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
 .wall-item { height: 50px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; }
-.wall-item.sel { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(79,124,255,.25); }
 .accent-list { display: flex; gap: 10px; }
 .accent-item { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
-.accent-item.sel { border-color: #fff; }
 
 .paint { display: flex; flex-direction: column; height: 100%; }
 .paint-bar { display: flex; align-items: center; gap: 10px; padding: 7px 10px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
@@ -217,13 +212,13 @@ const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 
 /* =========================================================
-   1. 虚拟文件系统
+   1. 虚拟文件系统 (支持文本与 Blob URL)
    ========================================================= */
 const FS = {
   type: 'dir',
   children: {
     home: { type: 'dir', children: { guest: { type: 'dir', children: {
-      'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以尝试上传图片、PDF、音频或视频，双击即可在原生窗口内查看。' },
+      'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以尝试上传图片、PDF、音频或视频，双击即可自动调用相应的查看器打开。' },
       documents: { type: 'dir', children: {} }
     }}}}
   }
@@ -260,7 +255,12 @@ function getParent(path) {
 }
 
 /* =========================================================
-   2. 窗口管理器
+   2. 全局应用注册表 (必须放在应用定义之前)
+   ========================================================= */
+const APPS = {};
+
+/* =========================================================
+   3. 窗口管理器
    ========================================================= */
 const winList = [];
 let zTop = 10;
@@ -404,7 +404,7 @@ function openApp(appId, arg) {
 }
 
 /* =========================================================
-   3. 独立文件查看器 (图片/PDF/媒体)
+   4. 独立文件查看器 (图片/PDF/媒体)
    ========================================================= */
 APPS.imageviewer = {
   name: '图片查看器', icon: '🖼️', width: 640, height: 480,
@@ -454,10 +454,8 @@ APPS.mediaplayer = {
 };
 
 /* =========================================================
-   4. 应用注册表
+   5. 核心应用注册
    ========================================================= */
-const APPS = {};
-
 APPS.term = {
   name: '终端', icon: '⌨️', width: 680, height: 430,
   mount(body) {
@@ -496,6 +494,28 @@ APPS.term = {
         if (!node || node.type === 'dir') return 'Not found';
         if (node.url) return '[二进制文件，无法在终端显示]';
         return node.content;
+      },
+      echo: (args) => args.join(' '),
+      mkdir: (args) => {
+        if (!args[0]) return 'usage: mkdir <name>';
+        const par = getParent(normalizePath(args[0], cwd));
+        if (!par || par.parent.type !== 'dir' || par.parent.children[par.name]) return 'Error';
+        par.parent.children[par.name] = { type: 'dir', children: {} };
+        return '';
+      },
+      touch: (args) => {
+        if (!args[0]) return 'usage: touch <name>';
+        const par = getParent(normalizePath(args[0], cwd));
+        if (!par || par.parent.type !== 'dir') return 'Error';
+        if (!par.parent.children[par.name]) par.parent.children[par.name] = { type: 'file', content: '', mime: 'text/plain' };
+        return '';
+      },
+      rm: (args) => {
+        const par = getParent(normalizePath(args[0] || '', cwd));
+        if (!par || !par.parent.children[par.name]) return 'Not found';
+        if (par.parent.children[par.name].type === 'dir' && Object.keys(par.parent.children[par.name].children).length) return 'Directory not empty';
+        delete par.parent.children[par.name];
+        return '';
       },
       clear: () => { out.innerHTML = ''; return ''; }
     };
@@ -626,7 +646,6 @@ APPS.files = {
         };
         reader.readAsText(file);
       } else {
-        // 对于图片、PDF、音视频等，生成 Blob URL
         const url = URL.createObjectURL(file);
         node.children[file.name] = { type: 'file', url: url, mime: file.type, name: file.name };
         render();
@@ -693,8 +712,8 @@ APPS.music = {
             <div style="font-size:12px;color:#888">WebOS 在线音乐</div>
           </div>
         </div>
-        <div class="music-controls">
-          <audio id="music-audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" controls style="width:100%; margin:0 15px 15px;"></audio>
+        <div style="padding:0 15px 15px;">
+          <audio src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" controls style="width:100%;"></audio>
         </div>
       </div>`;
   }
@@ -811,9 +830,8 @@ APPS.paint = {
 };
 
 /* =========================================================
-   5. 系统初始化
+   6. 系统初始化
    ========================================================= */
-// 注册桌面显示的 App 列表 (包含新加的 图片查看器 和 媒体播放器)
 const DESKTOP_APPS = [
   'files', 'notepad', 'calc', 'term', 
   'imageviewer', 'mediaplayer', 'music', 'paint', 
@@ -872,12 +890,17 @@ document.addEventListener('pointerdown', (e) => {
 });
 
 (function boot() {
-  const wall = localStorage.getItem('webos.wall');
-  if (wall) $('#desktop').style.background = wall;
-  const accent = localStorage.getItem('webos.accent');
-  if (accent) document.documentElement.style.setProperty('--accent', accent);
+  try {
+    const wall = localStorage.getItem('webos.wall');
+    if (wall) $('#desktop').style.background = wall;
+    const accent = localStorage.getItem('webos.accent');
+    if (accent) document.documentElement.style.setProperty('--accent', accent);
 
-  buildDesktop(); buildStartMenu(); updateClock(); setInterval(updateClock, 1000);
+    buildDesktop(); buildStartMenu(); updateClock(); setInterval(updateClock, 1000);
+  } catch (e) {
+    console.error("初始化失败：", e);
+    alert("系统启动失败，请刷新页面重试。错误详情：" + e.message);
+  }
 })();
 </script>
 </body>
