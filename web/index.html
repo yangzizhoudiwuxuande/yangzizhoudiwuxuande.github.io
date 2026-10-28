@@ -29,18 +29,18 @@ button { font-family: inherit; cursor: pointer; }
 }
 #icons {
   position: absolute; inset: 0; padding: 16px;
-  display: grid; grid-template-columns: repeat(auto-fill, 90px);
-  grid-auto-rows: 98px; align-content: start; gap: 6px; z-index: 1;
+  display: grid; grid-template-columns: repeat(auto-fill, 80px);
+  grid-auto-rows: 95px; align-content: start; gap: 4px; z-index: 1;
 }
 .desk-icon {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 8px 4px; border-radius: 8px; cursor: pointer; color: #fff;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 2px; border-radius: 8px; cursor: pointer; color: #fff;
   text-shadow: 0 1px 4px rgba(0,0,0,.9); border: 1px solid transparent;
+  transition: background 0.2s;
 }
-.desk-icon:hover { background: rgba(255,255,255,.12); }
-.desk-icon.selected { background: rgba(79,124,255,.35); border-color: rgba(255,255,255,.35); }
-.desk-icon .glyph { font-size: 38px; filter: drop-shadow(0 2px 5px rgba(0,0,0,.45)); }
-.desk-icon .label { font-size: 12px; text-align: center; }
+.desk-icon:active, .desk-icon.selected { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.3); }
+.desk-icon .glyph { font-size: 34px; filter: drop-shadow(0 2px 5px rgba(0,0,0,.45)); }
+.desk-icon .label { font-size: 11px; text-align: center; word-break: break-all; line-height: 1.2; }
 
 /* ==================== 窗口 ==================== */
 #windows { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
@@ -48,7 +48,7 @@ button { font-family: inherit; cursor: pointer; }
   position: absolute; display: flex; flex-direction: column;
   background: var(--win-bg); border: 1px solid rgba(255,255,255,.12);
   border-radius: 10px; box-shadow: 0 18px 50px rgba(0,0,0,.45);
-  overflow: hidden; min-width: 280px; min-height: 150px;
+  overflow: hidden; min-width: 260px; min-height: 150px;
   pointer-events: auto; animation: winIn .16s ease-out;
 }
 @keyframes winIn { from { opacity: 0; transform: scale(.965) translateY(10px); } to { opacity: 1; transform: none; } }
@@ -63,7 +63,7 @@ button { font-family: inherit; cursor: pointer; }
 .t-ico { font-size: 15px; }
 .t-title { flex: 1; font-size: 13px; color: #dfe4ee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .t-btns { display: flex; gap: 2px; }
-.wbtn { width: 30px; height: 24px; border: none; background: transparent; color: #b8c0d0; border-radius: 5px; font-size: 13px; }
+.wbtn { width: 32px; height: 28px; border: none; background: transparent; color: #b8c0d0; border-radius: 5px; font-size: 14px; }
 .wbtn:hover { background: rgba(255,255,255,.14); color: #fff; }
 .wbtn.close:hover { background: #e5484d; color: #fff; }
 
@@ -72,38 +72,36 @@ button { font-family: inherit; cursor: pointer; }
 .win-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 6px; }
 
 .resizer {
-  position: absolute; right: 0; bottom: 0; width: 16px; height: 16px;
-  cursor: nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,.35) 50%);
+  position: absolute; right: 0; bottom: 0; width: 20px; height: 20px;
+  cursor: nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,.3) 50%);
   border-bottom-right-radius: 10px; touch-action: none;
 }
 
 /* ==================== 任务栏 ==================== */
 #taskbar {
   position: fixed; left: 0; right: 0; bottom: 0; height: var(--bar-h);
-  display: flex; align-items: center; gap: 8px; padding: 0 12px; padding-bottom: env(safe-area-inset-bottom);
+  display: flex; align-items: center; gap: 8px; padding: 0 10px; padding-bottom: env(safe-area-inset-bottom);
   background: rgba(16, 18, 24, .85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   border-top: 1px solid rgba(255,255,255,.09); z-index: 90000;
 }
 #startBtn {
-  height: 38px; padding: 0 14px; display: flex; align-items: center; gap: 7px;
+  height: 38px; padding: 0 12px; display: flex; align-items: center; gap: 6px;
   border: none; border-radius: 8px; background: rgba(255,255,255,.08); color: #e8eaf0; font-size: 13px; font-weight: 500;
 }
-#startBtn:hover { background: rgba(255,255,255,.18); }
 #startBtn.open { background: var(--accent); color: #fff; }
 
 #tasks { flex: 1; display: flex; gap: 6px; overflow: hidden; }
 .task-item {
   width: 44px; height: 38px; display: flex; justify-content: center; align-items: center;
   border: 1px solid transparent; border-radius: 8px; background: rgba(255,255,255,.05);
-  color: #c6ccd8; font-size: 18px;
+  color: #c6ccd8; font-size: 20px;
 }
-.task-item:hover { background: rgba(255,255,255,.14); }
 .task-item.active { background: rgba(79,124,255,.22); border-color: rgba(79,124,255,.5); color: #fff; }
-#tray { display: flex; align-items: center; gap: 8px; padding: 0 8px; font-size: 12px; color: #c6ccd8; }
+#tray { display: flex; align-items: center; gap: 8px; padding: 0 4px; font-size: 12px; color: #c6ccd8; }
 
 /* ==================== 开始菜单 ==================== */
 #startMenu {
-  position: fixed; left: 8px; bottom: calc(var(--bar-h) + 8px); width: 320px; padding: 14px;
+  position: fixed; left: 8px; bottom: calc(var(--bar-h) + 8px); width: 300px; padding: 14px;
   background: rgba(22, 24, 32, .95); backdrop-filter: blur(28px); border: 1px solid rgba(255,255,255,.13);
   border-radius: 12px; box-shadow: 0 24px 70px rgba(0,0,0,.65); display: none; z-index: 95000;
 }
@@ -115,11 +113,11 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ==================== 通用组件 ==================== */
 .btn {
-  height: 26px; padding: 0 10px; border: 1px solid rgba(255,255,255,.15);
+  height: 28px; padding: 0 8px; border: 1px solid rgba(255,255,255,.15);
   border-radius: 6px; background: rgba(255,255,255,.07); color: #d6dbe6; font-size: 12px;
+  white-space: nowrap;
 }
-.btn:hover { background: rgba(255,255,255,.16); }
-.btn:active { transform: scale(0.97); }
+.btn:active { background: rgba(255,255,255,.2); }
 .btn.primary { background: var(--accent); border-color: transparent; color: #fff; }
 
 /* ==================== 终端 ==================== */
@@ -133,18 +131,17 @@ button { font-family: inherit; cursor: pointer; }
 
 /* ==================== 文件管理器 ==================== */
 .fm { display: flex; flex-direction: column; height: 100%; }
-.fm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
+.fm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
 .fm-path { flex: 1; font-size: 12px; color: var(--text-dim); font-family: monospace; background: rgba(0,0,0,.25); border-radius: 5px; padding: 4px 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fm-list { flex: 1; overflow: auto; padding: 12px; display: grid; grid-template-columns: repeat(auto-fill, 80px); grid-auto-rows: 85px; align-content: start; gap: 6px; }
-.fm-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; }
-.fm-item:hover { background: rgba(255,255,255,.1); }
+.fm-list { flex: 1; overflow: auto; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, 75px); grid-auto-rows: 85px; align-content: start; gap: 6px; }
+.fm-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; }
 .fm-item.selected { background: rgba(79,124,255,.25); border-color: rgba(79,124,255,.5); }
 .fm-ico { font-size: 28px; }
 .fm-name { font-size: 11px; text-align: center; color: #d6dbe6; word-break: break-all; }
 
 /* ==================== 各应用样式 ==================== */
 .app-notepad { display: flex; flex-direction: column; height: 100%; }
-.pad-bar { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
+.pad-bar { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
 .app-notepad textarea { flex: 1; width: 100%; padding: 12px; border: none; outline: none; resize: none; background: transparent; color: #e8eaf0; font-family: monospace; font-size: 14px; }
 
 .calc { display: flex; flex-direction: column; height: 100%; }
@@ -153,19 +150,18 @@ button { font-family: inherit; cursor: pointer; }
 .calc-res { font-size: 32px; font-weight: 600; min-height: 38px; }
 .calc-keys { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; }
 .calc-keys button { border: none; border-radius: 8px; background: rgba(255,255,255,.08); color: #e8eaf0; font-size: 20px; font-weight: 500; transition: background 0.1s; }
-.calc-keys button:hover { background: rgba(255,255,255,.17); }
-.calc-keys button:active { transform: scale(0.95); background: rgba(255,255,255,.25); }
+.calc-keys button:active { background: rgba(255,255,255,.25); transform: scale(0.95); }
 
 .music-app { display: flex; flex-direction: column; height: 100%; background: linear-gradient(180deg, #2b2e3b 0%, #1a1c24 100%); }
 .music-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 15px; }
-.music-cover { width: 140px; height: 140px; border-radius: 50%; background: #111; display: grid; place-items: center; font-size: 60px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+.music-cover { width: 120px; height: 120px; border-radius: 50%; background: #111; display: grid; place-items: center; font-size: 50px; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
 
 .settings { padding: 18px 20px; }
 .settings h3 { font-size: 12px; font-weight: 600; color: var(--text-dim); margin: 0 0 10px; }
 .settings h3:not(:first-child) { margin-top: 24px; }
-.wall-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+.wall-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; }
 .wall-item { height: 50px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; }
-.accent-list { display: flex; gap: 10px; }
+.accent-list { display: flex; gap: 10px; flex-wrap: wrap; }
 .accent-item { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
 
 .paint { display: flex; flex-direction: column; height: 100%; }
@@ -174,7 +170,7 @@ button { font-family: inherit; cursor: pointer; }
 .paint-wrap canvas { max-width: 100%; max-height: 100%; cursor: crosshair; touch-action: none; }
 
 .clock-app { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: radial-gradient(circle at 50% 30%, rgba(79,124,255,.22), transparent 65%); }
-.clock-time { font-size: 52px; font-weight: 300; letter-spacing: 2px; }
+.clock-time { font-size: 48px; font-weight: 300; letter-spacing: 2px; }
 .clock-date { font-size: 14px; color: var(--text-dim); }
 
 .snake { display: flex; flex-direction: column; height: 100%; padding: 10px; gap: 8px; }
@@ -187,7 +183,7 @@ button { font-family: inherit; cursor: pointer; }
 .viewer-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .viewer-container video { max-width: 100%; max-height: 100%; outline: none; }
 .viewer-container iframe { width: 100%; height: 100%; border: none; background: #fff; }
-.viewer-empty { color: #888; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.viewer-empty { color: #888; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 20px; }
 </style>
 </head>
 <body>
@@ -289,7 +285,7 @@ function startDrag(w, e) {
 
   el.style.transition = 'none';
   const onMove = (ev) => {
-    el.style.left = clamp(sl + ev.clientX - sx, -el.offsetWidth + 120, dw - 90) + 'px';
+    el.style.left = clamp(sl + ev.clientX - sx, -el.offsetWidth + 100, dw - 60) + 'px';
     el.style.top = clamp(st + ev.clientY - sy, 0, dh - 36) + 'px';
   };
   const onUp = () => {
@@ -308,8 +304,8 @@ function initResize(w) {
     const el = w.el, sx = e.clientX, sy = e.clientY;
     const sw = el.offsetWidth, sh = el.offsetHeight;
     const onMove = (ev) => {
-      el.style.width = Math.max(280, sw + ev.clientX - sx) + 'px';
-      el.style.height = Math.max(160, sh + ev.clientY - sy) + 'px';
+      el.style.width = Math.max(260, sw + ev.clientX - sx) + 'px';
+      el.style.height = Math.max(150, sh + ev.clientY - sy) + 'px';
     };
     const onUp = () => {
       window.removeEventListener('pointermove', onMove);
@@ -356,12 +352,17 @@ function openApp(appId, arg) {
   if (!app) return null;
 
   const id = 'w' + (++winSeq);
-  const width = app.width || 600, height = app.height || 420;
   const desktop = $('#desktop');
   const dw = desktop.clientWidth, dh = desktop.clientHeight;
   
-  const left = Math.max(12, Math.min(dw - width - 12, 40 + (winList.length%6) * 25));
-  const top = Math.max(12, Math.min(dh - height - 12, 30 + (winList.length%6) * 25));
+  // 自适应手机屏幕大小
+  let width = app.width || 600;
+  let height = app.height || 420;
+  if (width > dw - 20) width = dw - 20;
+  if (height > dh - 20) height = dh - 20;
+
+  const left = Math.max(10, (dw - width) / 2 + (winList.length%6) * 15);
+  const top = Math.max(10, (dh - height) / 2 + (winList.length%6) * 15);
 
   const el = document.createElement('div');
   el.className = 'window active';
@@ -449,8 +450,8 @@ APPS.mediaplayer = {
     } else {
       body.innerHTML = `
         <div style="padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px; background:#1a1c24;">
-          <div style="width:140px; height:140px; border-radius:50%; background:#111; display:grid; place-items:center; font-size:60px; box-shadow:0 10px 30px rgba(0,0,0,.5);">🎵</div>
-          <div style="font-size:14px; color:#fff;">${fileNode.name || '未知音频'}</div>
+          <div style="width:120px; height:120px; border-radius:50%; background:#111; display:grid; place-items:center; font-size:50px; box-shadow:0 10px 30px rgba(0,0,0,.5);">🎵</div>
+          <div style="font-size:14px; color:#fff; text-align:center;">${fileNode.name || '未知音频'}</div>
           <audio src="${fileNode.url}" controls autoplay style="width:100%"></audio>
         </div>`;
     }
@@ -499,28 +500,6 @@ APPS.term = {
         if (node.url) return '[二进制文件，无法在终端显示]';
         return node.content;
       },
-      echo: (args) => args.join(' '),
-      mkdir: (args) => {
-        if (!args[0]) return 'usage: mkdir <name>';
-        const par = getParent(normalizePath(args[0], cwd));
-        if (!par || par.parent.type !== 'dir' || par.parent.children[par.name]) return 'Error';
-        par.parent.children[par.name] = { type: 'dir', children: {} };
-        return '';
-      },
-      touch: (args) => {
-        if (!args[0]) return 'usage: touch <name>';
-        const par = getParent(normalizePath(args[0], cwd));
-        if (!par || par.parent.type !== 'dir') return 'Error';
-        if (!par.parent.children[par.name]) par.parent.children[par.name] = { type: 'file', content: '', mime: 'text/plain' };
-        return '';
-      },
-      rm: (args) => {
-        const par = getParent(normalizePath(args[0] || '', cwd));
-        if (!par || !par.parent.children[par.name]) return 'Not found';
-        if (par.parent.children[par.name].type === 'dir' && Object.keys(par.parent.children[par.name].children).length) return 'Directory not empty';
-        delete par.parent.children[par.name];
-        return '';
-      },
       clear: () => { out.innerHTML = ''; return ''; }
     };
 
@@ -558,7 +537,7 @@ APPS.files = {
           <input type="file" id="fm-upload" style="display:none">
         </div>
         <div class="fm-bar">
-          <button class="btn fm-up" style="padding:0 6px">⬆ 上一级</button>
+          <button class="btn fm-up" style="padding:0 8px">⬆ 上一级</button>
           <div class="fm-path"></div>
         </div>
         <div class="fm-list"></div>
@@ -576,6 +555,26 @@ APPS.files = {
       return '📝';
     };
 
+    const openFileOrDir = (n, name) => {
+      if (n.type === 'dir') {
+        cwd = `${cwd}/${name}`; selectedPath = null; render();
+      } else {
+        const mime = n.mime || '';
+        const ext = name.split('.').pop().toLowerCase();
+        if (mime.startsWith('image/') || ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) {
+          openApp('imageviewer', n);
+        } else if (mime === 'application/pdf' || ext === 'pdf') {
+          openApp('pdfviewer', n);
+        } else if (mime.startsWith('audio/') || ['mp3','wav','ogg','m4a'].includes(ext)) {
+          openApp('mediaplayer', { type: 'audio', fileNode: n });
+        } else if (mime.startsWith('video/') || ['mp4','webm','mkv'].includes(ext)) {
+          openApp('mediaplayer', { type: 'video', fileNode: n });
+        } else {
+          openApp('notepad', { path: `${cwd}/${name}`, content: n.content || '' });
+        }
+      }
+    };
+
     function render() {
       pathEl.textContent = cwd; listEl.innerHTML = '';
       const node = getNode(cwd); if (!node) return;
@@ -587,39 +586,34 @@ APPS.files = {
 
       if (!entries.length) { listEl.innerHTML = '<div style="color:#888;padding:10px">空目录</div>'; return; }
 
+      let lastClick = 0;
+
       entries.forEach(([name, n]) => {
         const item = document.createElement('div');
         item.className = 'fm-item' + (selectedPath === `${cwd}/${name}` ? ' selected' : '');
         item.innerHTML = `<div class="fm-ico">${getIcon(name, n.type)}</div><div class="fm-name"></div>`;
         item.querySelector('.fm-name').textContent = name;
         
-        item.onclick = (e) => { e.stopPropagation(); selectedPath = `${cwd}/${name}`; render(); };
-        item.ondblclick = () => {
-          if (n.type === 'dir') { cwd = `${cwd}/${name}`; selectedPath = null; render(); }
-          else {
-            const mime = n.mime || '';
-            const ext = name.split('.').pop().toLowerCase();
-            
-            if (mime.startsWith('image/') || ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) {
-              openApp('imageviewer', n);
-            } else if (mime === 'application/pdf' || ext === 'pdf') {
-              openApp('pdfviewer', n);
-            } else if (mime.startsWith('audio/') || ['mp3','wav','ogg','m4a'].includes(ext)) {
-              openApp('mediaplayer', { type: 'audio', fileNode: n });
-            } else if (mime.startsWith('video/') || ['mp4','webm','mkv'].includes(ext)) {
-              openApp('mediaplayer', { type: 'video', fileNode: n });
-            } else {
-              // 传入文件真实路径，供记事本保存使用
-              openApp('notepad', { path: `${cwd}/${name}`, content: n.content || '' });
-            }
+        item.onclick = (e) => {
+          e.stopPropagation();
+          // 清除其他选中
+          Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
+          item.classList.add('selected');
+          selectedPath = `${cwd}/${name}`;
+
+          const now = Date.now();
+          // 两次点击间隔小于 350ms 视为双击（兼容手机和PC）
+          if (now - lastClick < 350) {
+            openFileOrDir(n, name);
           }
+          lastClick = now;
         };
         listEl.appendChild(item);
       });
     }
 
     body.querySelector('.fm-up').onclick = () => { if (cwd === '/') return; cwd = cwd.replace(/\/[^/]+$/, '') || '/'; selectedPath = null; render(); };
-    listEl.onclick = () => { selectedPath = null; render(); };
+    listEl.onclick = () => { selectedPath = null; Array.from(listEl.children).forEach(el => el.classList.remove('selected')); };
 
     body.querySelector('[data-a="newdir"]').onclick = () => { const name = prompt('名称：'); if (name) { getNode(cwd).children[name] = { type: 'dir', children: {} }; render(); } };
     body.querySelector('[data-a="newfile"]').onclick = () => { const name = prompt('文件名：'); if (name) { getNode(cwd).children[name] = { type: 'file', content: '', mime: 'text/plain' }; render(); } };
@@ -728,10 +722,7 @@ APPS.calc = {
 
     const updateScreen = () => {
       exprEl.textContent = expr;
-      if (!expr) {
-        resEl.textContent = '0';
-        return;
-      }
+      if (!expr) { resEl.textContent = '0'; return; }
       try {
         const v = evalExpr(expr);
         resEl.textContent = String(v);
@@ -764,9 +755,7 @@ APPS.calc = {
       const ops = ['+', '-', '*', '/', '%'];
       const isOp = ops.includes(v);
       const lastIsOp = ops.includes(expr.slice(-1));
-      if (isOp && lastIsOp) {
-        expr = expr.slice(0, -1);
-      }
+      if (isOp && lastIsOp) expr = expr.slice(0, -1);
       
       expr += v;
       updateScreen();
@@ -931,8 +920,19 @@ function buildDesktop() {
     const d = document.createElement('div');
     d.className = 'desk-icon';
     d.innerHTML = `<div class="glyph">${app.icon}</div><div class="label">${app.name}</div>`;
-    d.onclick = (e) => { e.stopPropagation(); $$('.desk-icon').forEach(x => x.classList.remove('selected')); d.classList.add('selected'); };
-    d.ondblclick = () => openApp(id);
+    
+    let lastClick = 0;
+    d.onclick = (e) => {
+      e.stopPropagation();
+      $$('.desk-icon').forEach(x => x.classList.remove('selected'));
+      d.classList.add('selected');
+
+      const now = Date.now();
+      if (now - lastClick < 350) {
+        openApp(id);
+      }
+      lastClick = now;
+    };
     wrap.appendChild(d);
   });
 }
