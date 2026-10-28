@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>WebOS · 网页操作系统</title>
-<!-- 引入 PDF.js 用于完美渲染多页 PDF -->
+<!-- 引入 PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
 /* ==================== 基础 ==================== */
@@ -135,11 +135,26 @@ button { font-family: inherit; cursor: pointer; }
 .fm { display: flex; flex-direction: column; height: 100%; }
 .fm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
 .fm-path { flex: 1; font-size: 12px; color: var(--text-dim); font-family: monospace; background: rgba(0,0,0,.25); border-radius: 5px; padding: 4px 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fm-list { flex: 1; overflow: auto; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, 75px); grid-auto-rows: 85px; align-content: start; gap: 6px; }
-.fm-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; }
+.fm-list { flex: 1; overflow: auto; padding: 10px; align-content: start; gap: 6px; }
+
+/* 网格模式 */
+.fm-list.grid-view {
+  display: grid; grid-template-columns: repeat(auto-fill, 75px); grid-auto-rows: 85px;
+}
+.fm-list.grid-view .fm-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
+.fm-list.grid-view .fm-ico { font-size: 28px; }
+.fm-list.grid-view .fm-name { font-size: 11px; text-align: center; word-break: break-all; }
+
+/* 列表模式（横条） */
+.fm-list.list-view {
+  display: flex; flex-direction: column;
+}
+.fm-list.list-view .fm-item { display: flex; flex-direction: row; align-items: center; padding: 10px; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.fm-list.list-view .fm-ico { font-size: 22px; }
+.fm-list.list-view .fm-name { font-size: 13px; text-align: left; }
+
+.fm-item { border-radius: 7px; cursor: pointer; border: 1px solid transparent; }
 .fm-item.selected { background: rgba(79,124,255,.25); border-color: rgba(79,124,255,.5); }
-.fm-ico { font-size: 28px; }
-.fm-name { font-size: 11px; text-align: center; color: #d6dbe6; word-break: break-all; }
 
 /* ==================== 各应用样式 ==================== */
 .app-notepad { display: flex; flex-direction: column; height: 100%; }
@@ -186,7 +201,6 @@ button { font-family: inherit; cursor: pointer; }
 .viewer-container video { max-width: 100%; max-height: 100%; outline: none; }
 .viewer-empty { color: #888; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding: 20px; }
 
-/* PDF 查看器 */
 .pdf-container { width: 100%; height: 100%; overflow: auto; background: #333; padding: 10px; display: flex; flex-direction: column; align-items: center; }
 .pdf-page { max-width: 100%; margin-bottom: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); background: #fff; }
 </style>
@@ -222,9 +236,9 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const FS = {
   type: 'dir',
   children: {
-    '.trash': { type: 'dir', isTrash: true, name: '🗑️ 废纸篓', children: {} }, // 废纸篓
+    '.trash': { type: 'dir', isTrash: true, name: '🗑️ 废纸篓', children: {} },
     home: { type: 'dir', children: { guest: { type: 'dir', children: {
-      'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以尝试上传各种文件，或者删除文件到废纸篓体验回收站功能。' },
+      'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以体验全新的文件管理器和终端。' },
       documents: { type: 'dir', children: {} }
     }}}}
   }
@@ -437,7 +451,6 @@ APPS.pdfviewer = {
     }
     win.el.querySelector('.t-title').textContent = arg.name || 'PDF 阅读器';
     
-    // 使用 PDF.js 渲染所有页面
     body.innerHTML = `<div class="pdf-container" id="pdf-render-area">正在加载 PDF 引擎...</div>`;
     const renderArea = body.querySelector('#pdf-render-area');
 
@@ -446,34 +459,26 @@ APPS.pdfviewer = {
       return;
     }
 
-    // 设置 worker 路径
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
     const loadingTask = pdfjsLib.getDocument(arg.url);
     loadingTask.promise.then(pdf => {
-      renderArea.innerHTML = ''; // 清空加载提示
+      renderArea.innerHTML = ''; 
       
       const renderPage = (pageNum) => {
         pdf.getPage(pageNum).then(page => {
-          const viewport = page.getViewport({ scale: 1.5 }); // 缩放比例
+          const viewport = page.getViewport({ scale: 1.5 });
           const canvas = document.createElement('canvas');
           canvas.className = 'pdf-page';
           canvas.width = viewport.width;
           canvas.height = viewport.height;
           renderArea.appendChild(canvas);
 
-          const renderContext = {
-            canvasContext: canvas.getContext('2d'),
-            viewport: viewport
-          };
+          const renderContext = { canvasContext: canvas.getContext('2d'), viewport: viewport };
           page.render(renderContext);
         });
       };
-
-      // 逐页渲染
-      for (let i = 1; i <= pdf.numPages; i++) {
-        renderPage(i);
-      }
+      for (let i = 1; i <= pdf.numPages; i++) renderPage(i);
     }).catch(err => {
       renderArea.innerHTML = `<div style="color:#ff7b72; padding:20px;">PDF 加载失败: ${err.message}</div>`;
     });
@@ -525,6 +530,8 @@ APPS.term = {
       const d = document.createElement('div'); d.className = 'term-row ' + (cls||''); d.textContent = text;
       out.appendChild(d); out.scrollTop = out.scrollHeight;
     };
+    
+    // 补全的命令实现
     const CMDS = {
       help: () => '命令: ls, cd, pwd, cat, echo, mkdir, touch, rm, clear',
       pwd: () => cwd,
@@ -544,6 +551,28 @@ APPS.term = {
         if (!node || node.type === 'dir') return 'Not found';
         if (node.url) return '[二进制文件，无法在终端显示]';
         return node.content;
+      },
+      echo: (args) => args.join(' '),
+      mkdir: (args) => {
+        if (!args[0]) return 'usage: mkdir <name>';
+        const par = getParent(normalizePath(args[0], cwd));
+        if (!par || par.parent.type !== 'dir' || par.parent.children[par.name]) return 'Error: Directory exists or invalid path';
+        par.parent.children[par.name] = { type: 'dir', children: {} };
+        return `Created directory ${args[0]}`;
+      },
+      touch: (args) => {
+        if (!args[0]) return 'usage: touch <name>';
+        const par = getParent(normalizePath(args[0], cwd));
+        if (!par || par.parent.type !== 'dir') return 'Error: Invalid path';
+        if (!par.parent.children[par.name]) par.parent.children[par.name] = { type: 'file', content: '', mime: 'text/plain' };
+        return `Created file ${args[0]}`;
+      },
+      rm: (args) => {
+        const par = getParent(normalizePath(args[0] || '', cwd));
+        if (!par || !par.parent.children[par.name]) return 'Not found';
+        if (par.parent.children[par.name].type === 'dir' && Object.keys(par.parent.children[par.name].children).length) return 'Directory not empty';
+        delete par.parent.children[par.name];
+        return `Removed ${args[0]}`;
       },
       clear: () => { out.innerHTML = ''; return ''; }
     };
@@ -569,6 +598,7 @@ APPS.files = {
   name: '文件', icon: '📁', width: 660, height: 480,
   mount(body) {
     let cwd = '/home/guest'; let selectedPath = null;
+    let isListView = false; // 默认网格视图
 
     body.innerHTML = `
       <div class="fm">
@@ -580,6 +610,7 @@ APPS.files = {
             <button class="btn" data-a="copy">复制</button>
             <button class="btn" data-a="cut">剪切</button>
             <button class="btn" data-a="paste">粘贴</button>
+            <button class="btn" data-a="rename">重命名</button>
             <button class="btn primary" data-a="upload">上传文件</button>
             <button class="btn" data-a="delete" style="color:#ff7b72;">删除</button>
           </div>
@@ -593,12 +624,14 @@ APPS.files = {
         <div class="fm-bar">
           <button class="btn fm-up" style="padding:0 8px">⬆ 上一级</button>
           <div class="fm-path"></div>
+          <button class="btn" data-a="view" id="view-btn">▦ 列表</button>
         </div>
-        <div class="fm-list"></div>
+        <div class="fm-list grid-view"></div>
       </div>`;
 
     const pathEl = body.querySelector('.fm-path'), listEl = body.querySelector('.fm-list'), fileInput = body.querySelector('#fm-upload');
     const normalTools = body.querySelector('.normal-tools'), trashTools = body.querySelector('.trash-tools');
+    const viewBtn = body.querySelector('#view-btn');
 
     const getIcon = (name, type, isTrash) => {
       if (isTrash) return '🗑️';
@@ -620,7 +653,6 @@ APPS.files = {
         const mime = n.mime || '';
         const ext = name.split('.').pop().toLowerCase();
         
-        // 智能匹配打开应用
         if (mime.includes('image') || ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) {
           openApp('imageviewer', n);
         } else if (mime.includes('pdf') || ext === 'pdf') {
@@ -683,11 +715,25 @@ APPS.files = {
     body.querySelector('.fm-up').onclick = () => { if (cwd === '/') return; cwd = cwd.replace(/\/[^/]+$/, '') || '/'; selectedPath = null; render(); };
     listEl.onclick = () => { selectedPath = null; Array.from(listEl.children).forEach(el => el.classList.remove('selected')); };
 
+    // 切换视图模式
+    viewBtn.onclick = () => {
+      isListView = !isListView;
+      if (isListView) {
+        listEl.className = 'fm-list list-view';
+        viewBtn.textContent = '▦ 网格';
+      } else {
+        listEl.className = 'fm-list grid-view';
+        viewBtn.textContent = '▦ 列表';
+      }
+    };
+
     // 常规操作
     body.querySelector('[data-a="newdir"]').onclick = () => { const name = prompt('名称：'); if (name) { getNode(cwd).children[name] = { type: 'dir', children: {} }; render(); } };
     body.querySelector('[data-a="newfile"]').onclick = () => { const name = prompt('文件名：'); if (name) { getNode(cwd).children[name] = { type: 'file', content: '', mime: 'text/plain' }; render(); } };
-    body.querySelector('[data-a="copy"]').onclick = () => { if (selectedPath) Clipboard = { action: 'copy', path: selectedPath }; };
-    body.querySelector('[data-a="cut"]').onclick = () => { if (selectedPath) Clipboard = { action: 'cut', path: selectedPath }; };
+    
+    body.querySelector('[data-a="copy"]').onclick = () => { if (selectedPath) Clipboard = { action: 'copy', path: selectedPath }; else alert('请先选择文件'); };
+    body.querySelector('[data-a="cut"]').onclick = () => { if (selectedPath) Clipboard = { action: 'cut', path: selectedPath }; else alert('请先选择文件'); };
+    
     body.querySelector('[data-a="paste"]').onclick = () => {
       if (!Clipboard.path) return alert('剪贴板为空');
       const src = getParent(Clipboard.path), dest = getNode(cwd), name = Clipboard.path.split('/').pop();
@@ -699,14 +745,31 @@ APPS.files = {
       selectedPath = null; render();
     };
 
+    // 重命名
+    body.querySelector('[data-a="rename"]').onclick = () => {
+      if (!selectedPath) return alert('请先选择要重命名的项目');
+      const par = getParent(selectedPath);
+      if (par && par.parent) {
+        const oldName = par.name;
+        const newName = prompt('请输入新名称：', oldName);
+        if (!newName || newName === oldName) return;
+        if (par.parent.children[newName]) return alert('该名称已存在');
+        
+        // 修改节点名称
+        par.parent.children[newName] = par.parent.children[oldName];
+        delete par.parent.children[oldName];
+        selectedPath = null; render();
+      }
+    };
+
     // 删除与废纸篓操作
     body.querySelector('[data-a="delete"]').onclick = () => {
       if (!selectedPath) return alert('请先选择要删除的文件');
       const par = getParent(selectedPath);
       if (par && par.parent) {
         const node = par.parent.children[par.name];
-        node._originalPath = cwd; // 记录原路径
-        FS.children['.trash'].children[par.name] = node; // 移动到废纸篓
+        node._originalPath = cwd; 
+        FS.children['.trash'].children[par.name] = node; 
         delete par.parent.children[par.name];
         selectedPath = null; render();
       }
@@ -724,7 +787,7 @@ APPS.files = {
         let finalName = par.name;
         if (targetNode.children[finalName]) {
           finalName = prompt('原目录存在同名文件，请输入新名称:', finalName);
-          if (!finalName) return; // 取消
+          if (!finalName) return; 
         }
         
         targetNode.children[finalName] = node;
