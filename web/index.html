@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>WebOS · 网页操作系统</title>
-<!-- 引入 PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 <style>
 /* ==================== 基础 ==================== */
@@ -38,9 +37,8 @@ button { font-family: inherit; cursor: pointer; }
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 6px 2px; border-radius: 8px; cursor: pointer; color: #fff;
   text-shadow: 0 1px 4px rgba(0,0,0,.9); border: 1px solid transparent;
-  transition: background 0.2s;
 }
-.desk-icon:active, .desk-icon.selected { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.3); }
+.desk-icon.selected { background: rgba(255,255,255,.2); border-color: rgba(255,255,255,.3); }
 .desk-icon .glyph { font-size: 34px; filter: drop-shadow(0 2px 5px rgba(0,0,0,.45)); }
 .desk-icon .label { font-size: 11px; text-align: center; word-break: break-all; line-height: 1.2; }
 
@@ -122,6 +120,22 @@ button { font-family: inherit; cursor: pointer; }
 .btn:active { background: rgba(255,255,255,.2); }
 .btn.primary { background: var(--accent); border-color: transparent; color: #fff; }
 
+/* ==================== 右键菜单 ==================== */
+#context-menu {
+  position: fixed; display: none; z-index: 999999;
+  background: rgba(30, 32, 40, 0.95); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5); padding: 6px 0; min-width: 140px;
+}
+#context-menu li {
+  padding: 8px 16px; font-size: 13px; color: #e8eaf0; cursor: pointer;
+  list-style: none; display: flex; align-items: center; gap: 8px;
+}
+#context-menu li:hover { background: var(--accent); }
+#context-menu li.danger { color: #ff7b72; }
+#context-menu li.danger:hover { background: #e5484d; color: #fff; }
+#context-menu .divider { height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; }
+
 /* ==================== 终端 ==================== */
 .term { display: flex; flex-direction: column; height: 100%; padding: 10px; font-family: "Consolas", monospace; font-size: 12.5px; line-height: 1.6; background: rgba(8, 10, 16, .55); }
 .term-out { flex: 1; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
@@ -138,17 +152,13 @@ button { font-family: inherit; cursor: pointer; }
 .fm-list { flex: 1; overflow: auto; padding: 10px; align-content: start; gap: 6px; }
 
 /* 网格模式 */
-.fm-list.grid-view {
-  display: grid; grid-template-columns: repeat(auto-fill, 75px); grid-auto-rows: 85px;
-}
+.fm-list.grid-view { display: grid; grid-template-columns: repeat(auto-fill, 75px); grid-auto-rows: 85px; }
 .fm-list.grid-view .fm-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; }
 .fm-list.grid-view .fm-ico { font-size: 28px; }
 .fm-list.grid-view .fm-name { font-size: 11px; text-align: center; word-break: break-all; }
 
 /* 列表模式（横条） */
-.fm-list.list-view {
-  display: flex; flex-direction: column;
-}
+.fm-list.list-view { display: flex; flex-direction: column; }
 .fm-list.list-view .fm-item { display: flex; flex-direction: row; align-items: center; padding: 10px; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.05); }
 .fm-list.list-view .fm-ico { font-size: 22px; }
 .fm-list.list-view .fm-name { font-size: 13px; text-align: left; }
@@ -222,6 +232,9 @@ button { font-family: inherit; cursor: pointer; }
   <div class="sm-grid" id="smGrid"></div>
 </div>
 
+<!-- 全局右键菜单 -->
+<ul id="context-menu"></ul>
+
 <script>
 /* =========================================================
    0. 工具函数
@@ -229,6 +242,13 @@ button { font-family: inherit; cursor: pointer; }
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+function formatBytes(bytes) {
+  if (bytes === 0 || bytes === undefined) return '0 B';
+  const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
 
 /* =========================================================
    1. 虚拟文件系统
@@ -238,7 +258,7 @@ const FS = {
   children: {
     '.trash': { type: 'dir', isTrash: true, name: '🗑️ 废纸篓', children: {} },
     home: { type: 'dir', children: { guest: { type: 'dir', children: {
-      'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以体验全新的文件管理器和终端。' },
+      'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以尝试长按或者右键点击文件。', size: 1024 },
       documents: { type: 'dir', children: {} }
     }}}}
   }
@@ -275,9 +295,54 @@ function getParent(path) {
 }
 
 /* =========================================================
-   2. 全局应用注册表
+   2. 全局应用注册表 & 右键菜单逻辑
    ========================================================= */
 const APPS = {};
+const ctxMenu = $('#context-menu');
+
+// 关闭右键菜单
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('#context-menu')) ctxMenu.style.display = 'none';
+});
+
+// 显示右键菜单
+function showContextMenu(x, y, items) {
+  ctxMenu.innerHTML = '';
+  items.forEach(item => {
+    if (item.divider) {
+      const div = document.createElement('div');
+      div.className = 'divider';
+      ctxMenu.appendChild(div);
+      return;
+    }
+    const li = document.createElement('li');
+    li.textContent = item.label;
+    if (item.danger) li.classList.add('danger');
+    li.onclick = (e) => {
+      e.stopPropagation();
+      ctxMenu.style.display = 'none';
+      if (item.action) item.action();
+    };
+    ctxMenu.appendChild(li);
+  });
+
+  // 边缘检测
+  const menuW = 160, menuH = items.length * 36;
+  const px = Math.min(x, window.innerWidth - menuW - 10);
+  const py = Math.min(y, window.innerHeight - menuH - 10);
+  
+  ctxMenu.style.left = px + 'px';
+  ctxMenu.style.top = py + 'px';
+  ctxMenu.style.display = 'block';
+}
+
+// 通用属性弹窗
+function showProperties(name, type, size, path) {
+  const w = openApp('notepad', { 
+    content: `【属性】\n\n名称: ${name}\n类型: ${type === 'dir' ? '文件夹' : '文件'}\n大小: ${type === 'dir' ? '--' : formatBytes(size)}\n路径: ${path}`
+  });
+  if(w) w.el.querySelector('.t-title').textContent = '属性 - ' + name;
+}
 
 /* =========================================================
    3. 窗口管理器
@@ -428,15 +493,12 @@ function openApp(appId, arg) {
 }
 
 /* =========================================================
-   4. 独立文件查看器
+   4. 文件查看器
    ========================================================= */
 APPS.imageviewer = {
   name: '图片查看器', icon: '🖼️', width: 640, height: 480,
   mount(body, win, arg) {
-    if (!arg || !arg.url) {
-      body.innerHTML = `<div class="viewer-container"><div class="viewer-empty"><div style="font-size:40px">🖼️</div><div>请在文件管理器中双击图片打开</div></div></div>`;
-      return;
-    }
+    if (!arg || !arg.url) { body.innerHTML = `<div class="viewer-empty">暂无图片</div>`; return; }
     win.el.querySelector('.t-title').textContent = arg.name || '图片查看器';
     body.innerHTML = `<div class="viewer-container"><img src="${arg.url}" alt=""></div>`;
   }
@@ -445,148 +507,76 @@ APPS.imageviewer = {
 APPS.pdfviewer = {
   name: 'PDF 阅读器', icon: '📄', width: 800, height: 600,
   mount(body, win, arg) {
-    if (!arg || !arg.url) {
-      body.innerHTML = `<div class="viewer-container"><div class="viewer-empty"><div style="font-size:40px">📄</div><div>请在文件管理器中双击 PDF 打开</div></div></div>`;
-      return;
-    }
+    if (!arg || !arg.url) { body.innerHTML = `<div class="viewer-empty">暂无 PDF</div>`; return; }
     win.el.querySelector('.t-title').textContent = arg.name || 'PDF 阅读器';
-    
-    body.innerHTML = `<div class="pdf-container" id="pdf-render-area">正在加载 PDF 引擎...</div>`;
+    body.innerHTML = `<div class="pdf-container" id="pdf-render-area">正在加载...</div>`;
     const renderArea = body.querySelector('#pdf-render-area');
-
-    if (typeof pdfjsLib === 'undefined') {
-      renderArea.innerHTML = 'PDF 引擎加载失败，请检查网络。';
-      return;
-    }
-
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-    const loadingTask = pdfjsLib.getDocument(arg.url);
-    loadingTask.promise.then(pdf => {
-      renderArea.innerHTML = ''; 
-      
+    pdfjsLib.getDocument(arg.url).promise.then(pdf => {
+      renderArea.innerHTML = '';
       const renderPage = (pageNum) => {
         pdf.getPage(pageNum).then(page => {
           const viewport = page.getViewport({ scale: 1.5 });
           const canvas = document.createElement('canvas');
           canvas.className = 'pdf-page';
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
+          canvas.width = viewport.width; canvas.height = viewport.height;
           renderArea.appendChild(canvas);
-
-          const renderContext = { canvasContext: canvas.getContext('2d'), viewport: viewport };
-          page.render(renderContext);
+          page.render({ canvasContext: canvas.getContext('2d'), viewport });
         });
       };
       for (let i = 1; i <= pdf.numPages; i++) renderPage(i);
-    }).catch(err => {
-      renderArea.innerHTML = `<div style="color:#ff7b72; padding:20px;">PDF 加载失败: ${err.message}</div>`;
-    });
+    }).catch(err => { renderArea.innerHTML = `<div style="color:#ff7b72; padding:20px;">加载失败</div>`; });
   }
 };
 
 APPS.mediaplayer = {
   name: '媒体播放器', icon: '🎬', width: 640, height: 480,
   mount(body, win, arg) {
-    if (!arg || !arg.fileNode || !arg.fileNode.url) {
-      body.innerHTML = `<div class="viewer-container"><div class="viewer-empty"><div style="font-size:40px">🎬</div><div>请在文件管理器中双击音视频打开</div></div></div>`;
-      return;
-    }
+    if (!arg || !arg.fileNode || !arg.fileNode.url) { body.innerHTML = `<div class="viewer-empty">暂无媒体</div>`; return; }
     const { type, fileNode } = arg;
-    win.el.querySelector('.t-title').textContent = fileNode.name || '媒体播放器';
-    
+    win.el.querySelector('.t-title').textContent = fileNode.name;
     if (type === 'video') {
       body.innerHTML = `<div class="viewer-container" style="background:#000"><video src="${fileNode.url}" controls autoplay></video></div>`;
     } else {
-      body.innerHTML = `
-        <div style="padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px; background:#1a1c24;">
-          <div style="width:120px; height:120px; border-radius:50%; background:#111; display:grid; place-items:center; font-size:50px; box-shadow:0 10px 30px rgba(0,0,0,.5);">🎵</div>
-          <div style="font-size:14px; color:#fff; text-align:center;">${fileNode.name || '未知音频'}</div>
-          <audio src="${fileNode.url}" controls autoplay style="width:100%"></audio>
-        </div>`;
+      body.innerHTML = `<div style="padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px;">
+        <div style="font-size:60px;">🎵</div><div>${fileNode.name}</div><audio src="${fileNode.url}" controls autoplay style="width:100%"></audio></div>`;
     }
   }
 };
 
 /* =========================================================
-   5. 核心应用注册
+   5. 终端
    ========================================================= */
 APPS.term = {
   name: '终端', icon: '⌨️', width: 680, height: 430,
   mount(body) {
-    body.innerHTML = `
-      <div class="term">
-        <div class="term-out"></div>
-        <div class="term-inputline">
-          <span class="term-prompt">guest@webos:~$</span>
-          <input class="term-in" autocomplete="off" spellcheck="false">
-        </div>
-      </div>`;
+    body.innerHTML = `<div class="term"><div class="term-out"></div><div class="term-inputline"><span class="term-prompt"></span><input class="term-in" autocomplete="off" spellcheck="false"></div></div>`;
     const out = body.querySelector('.term-out'), input = body.querySelector('.term-in'), promptEl = body.querySelector('.term-prompt');
     let cwd = '/home/guest';
-
     const updatePrompt = () => { promptEl.textContent = `guest@webos:${cwd.replace('/home/guest', '~')}$`; };
-    const print = (text, cls) => {
-      const d = document.createElement('div'); d.className = 'term-row ' + (cls||''); d.textContent = text;
-      out.appendChild(d); out.scrollTop = out.scrollHeight;
-    };
+    const print = (text, cls) => { const d = document.createElement('div'); d.className = 'term-row ' + (cls||''); d.textContent = text; out.appendChild(d); out.scrollTop = out.scrollHeight; };
     
-    // 补全的命令实现
     const CMDS = {
       help: () => '命令: ls, cd, pwd, cat, echo, mkdir, touch, rm, clear',
       pwd: () => cwd,
-      ls: (args) => {
-        const node = getNode(normalizePath(args[0] || '.', cwd));
-        if (!node) return 'No such directory';
-        if (node.type === 'file') return args[0];
-        return Object.keys(node.children).map(k => node.children[k].name || (node.children[k].type==='dir'?k+'/':k)).join('  ') || '(empty)';
-      },
-      cd: (args) => {
-        const p = normalizePath(args[0] || '/', cwd); const node = getNode(p);
-        if (!node || node.type !== 'dir') return 'No such directory';
-        cwd = p; updatePrompt(); return '';
-      },
-      cat: (args) => {
-        const node = getNode(normalizePath(args[0] || '', cwd));
-        if (!node || node.type === 'dir') return 'Not found';
-        if (node.url) return '[二进制文件，无法在终端显示]';
-        return node.content;
-      },
+      ls: (args) => { const node = getNode(normalizePath(args[0] || '.', cwd)); if(!node) return 'Not found'; if(node.type==='file') return args[0]; return Object.keys(node.children).join('  ') || '(empty)'; },
+      cd: (args) => { const p = normalizePath(args[0] || '/', cwd); const node = getNode(p); if(!node || node.type!=='dir') return 'Not found'; cwd = p; updatePrompt(); return ''; },
+      cat: (args) => { const node = getNode(normalizePath(args[0] || '', cwd)); if(!node || node.type==='dir') return 'Not found'; if(node.url) return '[二进制]'; return node.content; },
       echo: (args) => args.join(' '),
-      mkdir: (args) => {
-        if (!args[0]) return 'usage: mkdir <name>';
-        const par = getParent(normalizePath(args[0], cwd));
-        if (!par || par.parent.type !== 'dir' || par.parent.children[par.name]) return 'Error: Directory exists or invalid path';
-        par.parent.children[par.name] = { type: 'dir', children: {} };
-        return `Created directory ${args[0]}`;
-      },
-      touch: (args) => {
-        if (!args[0]) return 'usage: touch <name>';
-        const par = getParent(normalizePath(args[0], cwd));
-        if (!par || par.parent.type !== 'dir') return 'Error: Invalid path';
-        if (!par.parent.children[par.name]) par.parent.children[par.name] = { type: 'file', content: '', mime: 'text/plain' };
-        return `Created file ${args[0]}`;
-      },
-      rm: (args) => {
-        const par = getParent(normalizePath(args[0] || '', cwd));
-        if (!par || !par.parent.children[par.name]) return 'Not found';
-        if (par.parent.children[par.name].type === 'dir' && Object.keys(par.parent.children[par.name].children).length) return 'Directory not empty';
-        delete par.parent.children[par.name];
-        return `Removed ${args[0]}`;
-      },
+      mkdir: (args) => { if(!args[0]) return 'usage: mkdir <name>'; const par = getParent(normalizePath(args[0], cwd)); if(!par||par.parent.children[par.name]) return 'Error'; par.parent.children[par.name]={type:'dir',children:{}}; return `Created ${args[0]}`; },
+      touch: (args) => { if(!args[0]) return 'usage: touch <name>'; const par = getParent(normalizePath(args[0], cwd)); if(!par) return 'Error'; if(!par.parent.children[par.name]) par.parent.children[par.name]={type:'file',content:'',mime:'text/plain'}; return `Created ${args[0]}`; },
+      rm: (args) => { const par = getParent(normalizePath(args[0] || '', cwd)); if(!par||!par.parent.children[par.name]) return 'Not found'; delete par.parent.children[par.name]; return `Removed ${args[0]}`; },
       clear: () => { out.innerHTML = ''; return ''; }
     };
 
     print('WebOS Terminal v1.0   输入 help 查看命令\n');
+    updatePrompt();
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         const line = input.value; input.value = '';
         print(promptEl.textContent + ' ' + line, 'cmd');
         const parts = line.trim().split(/\s+/);
-        if (parts[0]) {
-          const res = CMDS[parts[0]] ? CMDS[parts[0]](parts.slice(1)) : `未找到命令: ${parts[0]}`;
-          if (res) print(res);
-        }
+        if (parts[0]) { const res = CMDS[parts[0]] ? CMDS[parts[0]](parts.slice(1)) : `未找到命令: ${parts[0]}`; if(res) print(res); }
       }
     });
     body.onclick = () => input.focus();
@@ -594,50 +584,32 @@ APPS.term = {
   }
 };
 
+/* =========================================================
+   6. 文件管理器 (加入右键菜单)
+   ========================================================= */
 APPS.files = {
   name: '文件', icon: '📁', width: 660, height: 480,
   mount(body) {
     let cwd = '/home/guest'; let selectedPath = null;
-    let isListView = false; // 默认网格视图
+    let isListView = false;
 
     body.innerHTML = `
       <div class="fm">
         <div class="fm-bar">
-          <!-- 常规工具栏 -->
-          <div class="normal-tools" style="display:flex; gap:6px; flex-wrap:wrap;">
-            <button class="btn" data-a="newdir">新建文件夹</button>
-            <button class="btn" data-a="newfile">新建文件</button>
-            <button class="btn" data-a="copy">复制</button>
-            <button class="btn" data-a="cut">剪切</button>
-            <button class="btn" data-a="paste">粘贴</button>
-            <button class="btn" data-a="rename">重命名</button>
-            <button class="btn primary" data-a="upload">上传文件</button>
-            <button class="btn" data-a="delete" style="color:#ff7b72;">删除</button>
-          </div>
-          <!-- 废纸篓专属工具栏 -->
-          <div class="trash-tools" style="display:none; gap:6px; flex-wrap:wrap;">
-            <button class="btn primary" data-a="restore">恢复</button>
-            <button class="btn" data-a="empty" style="color:#ff7b72;">彻底删除</button>
-          </div>
-          <input type="file" id="fm-upload" style="display:none">
-        </div>
-        <div class="fm-bar">
           <button class="btn fm-up" style="padding:0 8px">⬆ 上一级</button>
           <div class="fm-path"></div>
-          <button class="btn" data-a="view" id="view-btn">▦ 列表</button>
+          <button class="btn" id="view-btn">▦ 列表</button>
         </div>
         <div class="fm-list grid-view"></div>
       </div>`;
 
-    const pathEl = body.querySelector('.fm-path'), listEl = body.querySelector('.fm-list'), fileInput = body.querySelector('#fm-upload');
-    const normalTools = body.querySelector('.normal-tools'), trashTools = body.querySelector('.trash-tools');
-    const viewBtn = body.querySelector('#view-btn');
+    const pathEl = body.querySelector('.fm-path'), listEl = body.querySelector('.fm-list');
 
     const getIcon = (name, type, isTrash) => {
       if (isTrash) return '🗑️';
       if (type === 'dir') return '📁';
       const ext = name.split('.').pop().toLowerCase();
-      if (['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) return '🖼️';
+      if (['jpg','jpeg','png','gif','webp'].includes(ext)) return '🖼️';
       if (['mp3','wav','ogg','m4a'].includes(ext)) return '🎵';
       if (['mp4','webm','mkv'].includes(ext)) return '🎬';
       if (ext === 'pdf') return '📄';
@@ -645,44 +617,24 @@ APPS.files = {
     };
 
     const openFileOrDir = (n, name, isTrash) => {
-      if (isTrash) {
-        cwd = '/.trash'; selectedPath = null; render();
-      } else if (n.type === 'dir') {
-        cwd = `${cwd === '/' ? '' : cwd}/${name}`; selectedPath = null; render();
-      } else {
-        const mime = n.mime || '';
-        const ext = name.split('.').pop().toLowerCase();
-        
-        if (mime.includes('image') || ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) {
-          openApp('imageviewer', n);
-        } else if (mime.includes('pdf') || ext === 'pdf') {
-          openApp('pdfviewer', n);
-        } else if (mime.includes('audio') || ['mp3','wav','ogg','m4a'].includes(ext)) {
-          openApp('mediaplayer', { type: 'audio', fileNode: n });
-        } else if (mime.includes('video') || ['mp4','webm','mkv'].includes(ext)) {
-          openApp('mediaplayer', { type: 'video', fileNode: n });
-        } else if (mime.includes('text') || ['txt','md','json','js','css','html','xml','csv','log'].includes(ext)) {
-          openApp('notepad', { path: `${cwd === '/' ? '' : cwd}/${name}`, content: n.content || '' });
-        } else {
-          alert('暂不支持打开此格式文件：' + name);
-        }
-      }
+      if (isTrash) { cwd = '/.trash'; render(); return; }
+      if (n.type === 'dir') { cwd = `${cwd === '/' ? '' : cwd}/${name}`; render(); return; }
+      
+      const mime = n.mime || '';
+      const ext = name.split('.').pop().toLowerCase();
+      if (mime.includes('image') || ['jpg','jpeg','png','gif','webp'].includes(ext)) openApp('imageviewer', n);
+      else if (mime.includes('pdf') || ext === 'pdf') openApp('pdfviewer', n);
+      else if (mime.includes('audio') || ['mp3','wav'].includes(ext)) openApp('mediaplayer', { type: 'audio', fileNode: n });
+      else if (mime.includes('video') || ['mp4','webm'].includes(ext)) openApp('mediaplayer', { type: 'video', fileNode: n });
+      else openApp('notepad', { path: `${cwd === '/' ? '' : cwd}/${name}`, content: n.content || '' });
     };
 
     function render() {
-      const isTrash = cwd === '/.trash';
-      normalTools.style.display = isTrash ? 'none' : 'flex';
-      trashTools.style.display = isTrash ? 'flex' : 'none';
-      
-      pathEl.textContent = isTrash ? '🗑️ 废纸篓' : cwd; 
+      pathEl.textContent = cwd === '/.trash' ? '🗑️ 废纸篓' : cwd; 
       listEl.innerHTML = '';
       const node = getNode(cwd); if (!node) return;
       
-      const entries = Object.entries(node.children).sort((a, b) => {
-        if (a[1].type !== b[1].type) return a[1].type === 'dir' ? -1 : 1;
-        return (a[1].name || a[0]).localeCompare(b[1].name || b[0]);
-      });
-
+      const entries = Object.entries(node.children).sort((a, b) => (a[1].type === 'dir' ? -1 : 1));
       if (!entries.length) { listEl.innerHTML = '<div style="color:#888;padding:10px">空目录</div>'; return; }
 
       let lastClick = 0;
@@ -696,6 +648,7 @@ APPS.files = {
         item.innerHTML = `<div class="fm-ico">${getIcon(displayName, n.type, n.isTrash)}</div><div class="fm-name"></div>`;
         item.querySelector('.fm-name').textContent = displayName;
         
+        // 左键点击（选中与双击打开）
         item.onclick = (e) => {
           e.stopPropagation();
           Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
@@ -703,171 +656,141 @@ APPS.files = {
           selectedPath = currentPath;
 
           const now = Date.now();
-          if (now - lastClick < 350) {
-            openFileOrDir(n, key, n.isTrash);
-          }
+          if (now - lastClick < 350) { openFileOrDir(n, key, n.isTrash); }
           lastClick = now;
         };
+
+        // 右键/长按 菜单逻辑
+        let pressTimer = null;
+        const showMenu = (x, y) => {
+          selectedPath = currentPath; // 选中该文件
+          Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
+          item.classList.add('selected');
+
+          showContextMenu(x, y, [
+            { label: '打开', action: () => openFileOrDir(n, key, n.isTrash) },
+            { label: '打开方式', action: () => {
+              const appId = prompt('输入打开方式 (notepad, imageviewer, mediaplayer, pdfviewer):', 'notepad');
+              if (appId === 'notepad') openApp('notepad', { content: n.content || '无法读取' });
+              else if (appId === 'imageviewer') openApp('imageviewer', n);
+              else if (appId === 'mediaplayer') openApp('mediaplayer', { type: n.mime && n.mime.includes('video') ? 'video' : 'audio', fileNode: n });
+              else if (appId === 'pdfviewer') openApp('pdfviewer', n);
+            }},
+            { divider: true },
+            { label: '复制', action: () => { Clipboard = { action: 'copy', path: currentPath }; } },
+            { label: '重命名', action: () => {
+              const par = getParent(currentPath);
+              const newName = prompt('输入新名称:', displayName);
+              if (newName && newName !== displayName && par && par.parent) {
+                if (par.parent.children[newName]) return alert('已存在同名文件');
+                par.parent.children[newName] = par.parent.children[par.name];
+                delete par.parent.children[par.name];
+                render();
+              }
+            }},
+            { label: '删除', danger: true, action: () => {
+              const par = getParent(currentPath);
+              if (par && par.parent) {
+                if (confirm(`确定要删除 ${displayName} 吗？`)) {
+                  n._originalPath = cwd; // 记录原位
+                  FS.children['.trash'].children[par.name] = n;
+                  delete par.parent.children[par.name];
+                  selectedPath = null; render();
+                }
+              }
+            }},
+            { divider: true },
+            { label: '属性', action: () => showProperties(displayName, n.type, n.size, currentPath) }
+          ]);
+        };
+
+        item.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); showMenu(e.clientX, e.clientY); });
+        item.addEventListener('pointerdown', (e) => { 
+          pressTimer = setTimeout(() => { showMenu(e.clientX, e.clientY); pressTimer = null; }, 500); 
+        });
+        item.addEventListener('pointerup', () => clearTimeout(pressTimer));
+        item.addEventListener('pointermove', () => clearTimeout(pressTimer));
+
         listEl.appendChild(item);
       });
     }
 
-    body.querySelector('.fm-up').onclick = () => { if (cwd === '/') return; cwd = cwd.replace(/\/[^/]+$/, '') || '/'; selectedPath = null; render(); };
-    listEl.onclick = () => { selectedPath = null; Array.from(listEl.children).forEach(el => el.classList.remove('selected')); };
+    // 空白处右键菜单（粘贴、属性）
+    const listShowMenu = (x, y) => {
+      selectedPath = null;
+      Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
+      const isTrash = cwd === '/.trash';
+      
+      let menuItems = [];
+      if (isTrash) {
+        menuItems = [{ label: '清空废纸篓', danger: true, action: () => {
+          if(confirm('确定清空废纸篓？')) { FS.children['.trash'].children = {}; render(); }
+        }}];
+      } else {
+        menuItems = [
+          { label: '新建文件夹', action: () => { const name = prompt('名称:'); if(name) { getNode(cwd).children[name] = {type:'dir',children:{}}; render(); } } },
+          { label: '新建文本', action: () => { const name = prompt('文件名:'); if(name) { getNode(cwd).children[name] = {type:'file',content:'',mime:'text/plain'}; render(); } } },
+          { divider: true },
+          { label: '粘贴', action: () => {
+            if (!Clipboard.path) return alert('剪贴板为空');
+            const src = getParent(Clipboard.path), dest = getNode(cwd), name = Clipboard.path.split('/').pop();
+            if (dest.children[name]) return alert('已存在同名项目');
+            dest.children[name] = JSON.parse(JSON.stringify(src.parent.children[name]));
+            if (Clipboard.action === 'cut') { delete src.parent.children[name]; Clipboard = { action: null, path: null }; }
+            render();
+          }},
+          { divider: true },
+          { label: '属性', action: () => showProperties('当前目录', 'dir', 0, cwd) }
+        ];
+      }
+      showContextMenu(x, y, menuItems);
+    };
 
-    // 切换视图模式
-    viewBtn.onclick = () => {
+    listEl.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!e.target.closest('.fm-item')) listShowMenu(e.clientX, e.clientY); });
+    
+    let listPressTimer = null;
+    listEl.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.fm-item')) return; // 点击了文件由上面的逻辑处理
+      listPressTimer = setTimeout(() => { listShowMenu(e.clientX, e.clientY); listPressTimer = null; }, 500);
+    });
+    listEl.addEventListener('pointerup', () => clearTimeout(listPressTimer));
+    listEl.addEventListener('pointermove', () => clearTimeout(listPressTimer));
+
+    // 顶部栏与视图切换
+    body.querySelector('.fm-up').onclick = () => { if (cwd === '/.trash' || cwd === '/') cwd = cwd === '/.trash' ? '/home/guest' : '/'; else cwd = cwd.replace(/\/[^/]+$/, '') || '/'; render(); };
+    body.querySelector('#view-btn').onclick = () => {
       isListView = !isListView;
-      if (isListView) {
-        listEl.className = 'fm-list list-view';
-        viewBtn.textContent = '▦ 网格';
-      } else {
-        listEl.className = 'fm-list grid-view';
-        viewBtn.textContent = '▦ 列表';
-      }
+      listEl.className = 'fm-list ' + (isListView ? 'list-view' : 'grid-view');
+      body.querySelector('#view-btn').textContent = isListView ? '▤ 网格' : '▦ 列表';
     };
 
-    // 常规操作
-    body.querySelector('[data-a="newdir"]').onclick = () => { const name = prompt('名称：'); if (name) { getNode(cwd).children[name] = { type: 'dir', children: {} }; render(); } };
-    body.querySelector('[data-a="newfile"]').onclick = () => { const name = prompt('文件名：'); if (name) { getNode(cwd).children[name] = { type: 'file', content: '', mime: 'text/plain' }; render(); } };
-    
-    body.querySelector('[data-a="copy"]').onclick = () => { if (selectedPath) Clipboard = { action: 'copy', path: selectedPath }; else alert('请先选择文件'); };
-    body.querySelector('[data-a="cut"]').onclick = () => { if (selectedPath) Clipboard = { action: 'cut', path: selectedPath }; else alert('请先选择文件'); };
-    
-    body.querySelector('[data-a="paste"]').onclick = () => {
-      if (!Clipboard.path) return alert('剪贴板为空');
-      const src = getParent(Clipboard.path), dest = getNode(cwd), name = Clipboard.path.split('/').pop();
-      if (cwd.startsWith(Clipboard.path) && Clipboard.path !== cwd) return alert('无法粘贴到自身目录');
-      if (dest.children[name]) return alert('已存在同名项目');
-      
-      dest.children[name] = JSON.parse(JSON.stringify(src.parent.children[name]));
-      if (Clipboard.action === 'cut') { delete src.parent.children[name]; Clipboard = { action: null, path: null }; }
-      selectedPath = null; render();
-    };
-
-    // 重命名
-    body.querySelector('[data-a="rename"]').onclick = () => {
-      if (!selectedPath) return alert('请先选择要重命名的项目');
-      const par = getParent(selectedPath);
-      if (par && par.parent) {
-        const oldName = par.name;
-        const newName = prompt('请输入新名称：', oldName);
-        if (!newName || newName === oldName) return;
-        if (par.parent.children[newName]) return alert('该名称已存在');
-        
-        // 修改节点名称
-        par.parent.children[newName] = par.parent.children[oldName];
-        delete par.parent.children[oldName];
-        selectedPath = null; render();
+    // 全局点击关闭选中
+    document.addEventListener('pointerdown', (e) => {
+      if (!e.target.closest('.fm-list') && !e.target.closest('#context-menu')) {
+        selectedPath = null;
+        Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
       }
-    };
-
-    // 删除与废纸篓操作
-    body.querySelector('[data-a="delete"]').onclick = () => {
-      if (!selectedPath) return alert('请先选择要删除的文件');
-      const par = getParent(selectedPath);
-      if (par && par.parent) {
-        const node = par.parent.children[par.name];
-        node._originalPath = cwd; 
-        FS.children['.trash'].children[par.name] = node; 
-        delete par.parent.children[par.name];
-        selectedPath = null; render();
-      }
-    };
-
-    body.querySelector('[data-a="restore"]').onclick = () => {
-      if (!selectedPath) return alert('请先选择要恢复的文件');
-      const par = getParent(selectedPath);
-      if (par && par.parent) {
-        const node = par.parent.children[par.name];
-        let targetPath = node._originalPath || '/home/guest';
-        let targetNode = getNode(targetPath);
-        if (!targetNode) targetNode = getNode('/home/guest');
-        
-        let finalName = par.name;
-        if (targetNode.children[finalName]) {
-          finalName = prompt('原目录存在同名文件，请输入新名称:', finalName);
-          if (!finalName) return; 
-        }
-        
-        targetNode.children[finalName] = node;
-        delete par.parent.children[par.name];
-        selectedPath = null; render();
-      }
-    };
-
-    body.querySelector('[data-a="empty"]').onclick = () => {
-      if (!selectedPath) return alert('请先选择要彻底删除的文件');
-      if (!confirm('彻底删除后无法恢复，确定吗？')) return;
-      const par = getParent(selectedPath);
-      if (par && par.parent) {
-        delete par.parent.children[par.name];
-        selectedPath = null; render();
-      }
-    };
-
-    // 上传操作
-    body.querySelector('[data-a="upload"]').onclick = () => fileInput.click();
-    fileInput.onchange = (e) => {
-      const file = e.target.files[0]; if (!file) return;
-      const isText = file.type.startsWith('text/') || /\.(txt|md|json|js|css|html|xml|csv|log)$/i.test(file.name);
-      const node = getNode(cwd);
-      
-      if (isText) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          node.children[file.name] = { type: 'file', content: ev.target.result, mime: file.type || 'text/plain', name: file.name };
-          render();
-        };
-        reader.readAsText(file);
-      } else {
-        const url = URL.createObjectURL(file);
-        node.children[file.name] = { type: 'file', url: url, mime: file.type, name: file.name };
-        render();
-      }
-      fileInput.value = '';
-    };
+    });
 
     render();
   }
 };
 
+/* =========================================================
+   7. 其余应用 (记事本/计算器/设置等)
+   ========================================================= */
 APPS.notepad = {
   name: '记事本', icon: '📝', width: 580, height: 440,
   mount(body, win, arg) {
-    body.innerHTML = `
-      <div class="app-notepad">
-        <div class="pad-bar">
-          <button class="btn primary" data-a="save">保存</button>
-          <span style="font-size:12px;color:#888;margin-left:10px;">${arg && arg.path ? arg.path : '未命名文件'}</span>
-        </div>
-        <textarea spellcheck="false" placeholder="输入内容…"></textarea>
-      </div>`;
-    const ta = body.querySelector('textarea');
-    ta.value = (arg && arg.content) || '';
+    body.innerHTML = `<div class="app-notepad"><div class="pad-bar"><button class="btn primary" data-a="save">保存</button><span style="font-size:12px;color:#888;margin-left:10px;">${arg && arg.path ? arg.path : '新建文本'}</span></div><textarea spellcheck="false"></textarea></div>`;
+    const ta = body.querySelector('textarea'); ta.value = (arg && arg.content) || '';
     let filePath = arg && arg.path;
-
     body.querySelector('[data-a="save"]').onclick = () => {
-      if (!filePath) {
-        const name = prompt('请输入文件名（例如 test.txt）：');
-        if (!name) return;
-        filePath = `/home/guest/${name}`;
-        body.querySelector('.pad-bar span').textContent = filePath;
-      }
-      
+      if (!filePath) { const n = prompt('文件名:'); if(!n) return; filePath = `/home/guest/${n}`; body.querySelector('.pad-bar span').textContent = filePath; }
       const par = getParent(filePath);
       if (par && par.parent) {
-        if (par.parent.children[par.name]) {
-          par.parent.children[par.name].content = ta.value;
-          par.parent.children[par.name].mime = 'text/plain';
-        } else {
-          par.parent.children[par.name] = { type: 'file', content: ta.value, mime: 'text/plain' };
-        }
-        const btn = body.querySelector('[data-a="save"]');
-        const oldText = btn.textContent;
-        btn.textContent = '已保存!';
-        btn.style.background = '#22c55e';
-        setTimeout(() => { btn.textContent = oldText; btn.style.background = 'var(--accent)'; }, 1500);
+        par.parent.children[par.name] = { type: 'file', content: ta.value, mime: 'text/plain', size: ta.value.length };
+        const btn = body.querySelector('[data-a="save"]'); btn.textContent = '已保存'; setTimeout(()=>btn.textContent='保存', 1000);
       }
     };
   }
@@ -876,135 +799,47 @@ APPS.notepad = {
 APPS.calc = {
   name: '计算器', icon: '🧮', width: 300, height: 420,
   mount(body) {
-    body.innerHTML = `
-      <div class="calc">
-        <div class="calc-screen">
-          <div class="calc-expr"></div>
-          <div class="calc-res">0</div>
-        </div>
-        <div class="calc-keys"></div>
-      </div>`;
+    body.innerHTML = `<div class="calc"><div class="calc-screen"><div class="calc-expr"></div><div class="calc-res">0</div></div><div class="calc-keys"></div></div>`;
     const exprEl = body.querySelector('.calc-expr'), resEl = body.querySelector('.calc-res'), keysEl = body.querySelector('.calc-keys');
     const KEYS = ['C','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','(', '0','.',')','='];
     let expr = '';
-    
-    const evalExpr = (s) => {
-      const clean = s.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
-      if (/\/0(?!\d)/.test(clean)) throw new Error('Divide by zero');
-      const val = Function('"use strict"; return (' + clean + ')')();
-      return Math.round(val * 1e10) / 1e10;
-    };
-
-    const updateScreen = () => {
-      exprEl.textContent = expr;
-      if (!expr) { resEl.textContent = '0'; return; }
-      try {
-        const v = evalExpr(expr);
-        resEl.textContent = String(v);
-      } catch {
-        resEl.textContent = expr.match(/[0-9.]+$/)?.[0] || '0';
-      }
-    };
-
+    const evalExpr = (s) => { const clean = s.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-'); return Math.round(Function('return (' + clean + ')')() * 1e10) / 1e10; };
     const press = (v) => {
-      if (v === 'C') { expr = ''; updateScreen(); return; }
-      if (v === '±') { 
-        if (!expr) expr = '-';
-        else if (/[0-9.]+$/.test(expr)) expr = expr.replace(/([0-9.]+)$/, '(-$1)');
-        updateScreen(); return; 
-      }
-      if (v === '=') {
-        if (!expr) return;
-        try {
-          const v2 = evalExpr(expr);
-          expr = String(v2);
-          exprEl.textContent = ''; 
-          resEl.textContent = expr;
-        } catch {
-          resEl.textContent = '错误';
-          expr = '';
-        }
-        return;
-      }
-      
-      const ops = ['+', '-', '*', '/', '%'];
-      const isOp = ops.includes(v);
-      const lastIsOp = ops.includes(expr.slice(-1));
-      if (isOp && lastIsOp) expr = expr.slice(0, -1);
-      
-      expr += v;
-      updateScreen();
+      if (v === 'C') { expr = ''; exprEl.textContent = ''; resEl.textContent = '0'; return; }
+      if (v === '=') { try { expr = String(evalExpr(expr)); exprEl.textContent = ''; resEl.textContent = expr; } catch { resEl.textContent = '错误'; expr = ''; } return; }
+      expr += v; exprEl.textContent = expr;
+      try { resEl.textContent = String(evalExpr(expr)); } catch { resEl.textContent = expr.match(/[0-9.]+$/)?.[0] || '0'; }
     };
-    
-    KEYS.forEach(k => {
-      const b = document.createElement('button'); b.textContent = k;
-      b.onclick = () => {
-        if (k === '×') press('*');
-        else if (k === '÷') press('/');
-        else if (k === '−') press('-');
-        else press(k);
-      };
-      keysEl.appendChild(b);
-    });
+    KEYS.forEach(k => { const b = document.createElement('button'); b.textContent = k; b.onclick = () => press(k==='×'?'*':k==='÷'?'/':k==='−'?'-':k); keysEl.appendChild(b); });
   }
 };
 
 APPS.music = {
   name: '音乐', icon: '🎵', width: 340, height: 480,
-  mount(body, win) {
-    body.innerHTML = `
-      <div class="music-app">
-        <div class="music-top">
-          <div class="music-cover">🎧</div>
-          <div style="text-align:center">
-            <div style="font-size:16px;font-weight:bold">SoundHelix Demo</div>
-            <div style="font-size:12px;color:#888">WebOS 在线音乐</div>
-          </div>
-        </div>
-        <div style="padding:0 15px 15px;">
-          <audio src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" controls style="width:100%;"></audio>
-        </div>
-      </div>`;
-  }
+  mount(body) { body.innerHTML = `<div class="music-app"><div class="music-top"><div class="music-cover">🎧</div><div><b>SoundHelix Demo</b></div></div><div style="padding:15px;"><audio src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" controls style="width:100%"></audio></div></div>`; }
 };
 
 APPS.settings = {
   name: '设置', icon: '⚙️', width: 560, height: 430,
   mount(body) {
-    const WALLS = [
-      'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #43276b 100%)',
-      'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
-      'linear-gradient(135deg, #42275a 0%, #734b6d 100%)',
-      'linear-gradient(135deg, #232526 0%, #414345 100%)'
-    ];
-    const ACCENTS = ['#4f7cff', '#22c55e', '#f59e0b', '#ef4444', '#a855f7'];
     body.innerHTML = `<div class="settings"><h3>桌面壁纸</h3><div class="wall-list"></div><h3>主题色</h3><div class="accent-list"></div></div>`;
+    const WALLS = ['linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #43276b 100%)', 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)', 'linear-gradient(135deg, #42275a 0%, #734b6d 100%)', 'linear-gradient(135deg, #232526 0%, #414345 100%)'];
+    const ACCENTS = ['#4f7cff', '#22c55e', '#f59e0b', '#ef4444', '#a855f7'];
     const wl = body.querySelector('.wall-list'), al = body.querySelector('.accent-list');
-    
-    WALLS.forEach(css => {
-      const d = document.createElement('div'); d.className = 'wall-item';
-      d.style.background = css;
-      d.onclick = () => { $('#desktop').style.background = css; localStorage.setItem('webos.wall', css); };
-      wl.appendChild(d);
-    });
-    ACCENTS.forEach(c => {
-      const d = document.createElement('div'); d.className = 'accent-item'; d.style.background = c;
-      d.onclick = () => { document.documentElement.style.setProperty('--accent', c); localStorage.setItem('webos.accent', c); };
-      al.appendChild(d);
-    });
+    WALLS.forEach(c => { const d = document.createElement('div'); d.className='wall-item'; d.style.background=c; d.onclick=()=>$('#desktop').style.background=c; wl.appendChild(d); });
+    ACCENTS.forEach(c => { const d = document.createElement('div'); d.className='accent-item'; d.style.background=c; d.onclick=()=>document.documentElement.style.setProperty('--accent', c); al.appendChild(d); });
   }
 };
 
 APPS.clock = {
   name: '时钟', icon: '🕐', width: 380, height: 280,
   mount(body, win) {
-    body.innerHTML = `<div class="clock-app"><div class="clock-time">--:--:--</div><div class="clock-date"></div></div>`;
-    const tick = () => {
+    body.innerHTML = `<div class="clock-app"><div class="clock-time"></div><div class="clock-date"></div></div>`;
+    const timer = setInterval(() => {
       const d = new Date(), p = (n) => String(n).padStart(2, '0');
       body.querySelector('.clock-time').textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
-      body.querySelector('.clock-date').textContent = d.toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-    };
-    const timer = setInterval(tick, 1000); tick();
+      body.querySelector('.clock-date').textContent = d.toLocaleDateString('zh-CN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    }, 1000);
     win.onClose = () => clearInterval(timer);
   }
 };
@@ -1012,44 +847,34 @@ APPS.clock = {
 APPS.snake = {
   name: '贪吃蛇', icon: '🐍', width: 380, height: 470,
   mount(body, win) {
-    body.innerHTML = `<div class="snake"><div class="snake-hud"><span class="snake-score">得分 0</span><span>方向键控制</span></div><canvas width="320" height="320"></canvas></div>`;
+    body.innerHTML = `<div class="snake"><div class="snake-hud"><span>得分 0</span><span>方向键控制</span></div><canvas width="320" height="320"></canvas></div>`;
     const canvas = body.querySelector('canvas'), g = canvas.getContext('2d');
-    const CELL = 16, N = 20;
-    let snake, dir, nextDir, food, score, dead, timer;
-    
+    const N = 20, C = 16;
+    let snake, dir, food, score, dead, timer;
     const reset = () => {
-      snake = [{x:9,y:9},{x:8,y:9},{x:7,y:9}]; dir = {x:1,y:0}; nextDir = dir; score = 0; dead = false;
-      body.querySelector('.snake-score').textContent = '得分 0';
-      do { food = {x:(Math.random()*N)|0, y:(Math.random()*N)|0}; } while (snake.some(s => s.x===food.x && s.y===food.y));
+      snake = [{x:9,y:9},{x:8,y:9},{x:7,y:9}]; dir = {x:1,y:0}; score = 0; dead = false;
+      do { food = {x:(Math.random()*N)|0, y:(Math.random()*N)|0}; } while (snake.some(s=>s.x===food.x&&s.y===food.y));
       draw();
+    };
+    const draw = () => {
+      g.fillStyle = '#111827'; g.fillRect(0,0,320,320);
+      g.fillStyle = '#ef4444'; g.beginPath(); g.arc(food.x*C+8, food.y*C+8, 6, 0, Math.PI*2); g.fill();
+      snake.forEach((s,i)=>{ g.fillStyle = i===0 ? '#4ade80' : '#22c55e'; g.fillRect(s.x*C+1, s.y*C+1, C-2, C-2); });
+      if (dead) { g.fillStyle = 'rgba(0,0,0,.7)'; g.fillRect(0,0,320,320); g.fillStyle = '#ff7b72'; g.font='24px sans-serif'; g.textAlign='center'; g.fillText('游戏结束', 160, 160); }
     };
     const step = () => {
       if (dead) return;
-      dir = nextDir;
-      const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
-      if (head.x<0||head.y<0||head.x>=N||head.y>=N||snake.some(s=>s.x===head.x&&s.y===head.y)) { dead = true; draw(); return; }
+      const head = {x:snake[0].x+dir.x, y:snake[0].y+dir.y};
+      if (head.x<0||head.x>=N||head.y<0||head.y>=N||snake.some(s=>s.x===head.x&&s.y===head.y)) { dead=true; draw(); return; }
       snake.unshift(head);
-      if (head.x===food.x && head.y===food.y) { score+=10; body.querySelector('.snake-score').textContent='得分 '+score; resetFood(); } else snake.pop();
+      if (head.x===food.x && head.y===food.y) { score+=10; body.querySelector('.snake-hud span').textContent='得分 '+score; do { food = {x:(Math.random()*N)|0, y:(Math.random()*N)|0}; } while (snake.some(s=>s.x===food.x&&s.y===food.y)); } else snake.pop();
       draw();
-    };
-    const resetFood = () => { do { food = {x:(Math.random()*N)|0, y:(Math.random()*N)|0}; } while (snake.some(s => s.x===food.x && s.y===food.y)); };
-    const draw = () => {
-      g.fillStyle = '#111827'; g.fillRect(0,0,320,320);
-      g.strokeStyle = 'rgba(255,255,255,.045)';
-      for(let i=1;i<N;i++){ g.beginPath();g.moveTo(i*CELL,0);g.lineTo(i*CELL,320);g.stroke();g.beginPath();g.moveTo(0,i*CELL);g.lineTo(320,i*CELL);g.stroke(); }
-      g.fillStyle = '#ef4444'; g.beginPath(); g.arc(food.x*CELL+8, food.y*CELL+8, 6, 0, Math.PI*2); g.fill();
-      snake.forEach((s,i) => { g.fillStyle = i===0 ? '#4ade80' : '#22c55e'; g.fillRect(s.x*CELL+1, s.y*CELL+1, CELL-2, CELL-2); });
-      if (dead) {
-        g.fillStyle = 'rgba(0,0,0,.7)'; g.fillRect(0,0,320,320);
-        g.fillStyle = '#ff7b72'; g.font = 'bold 24px sans-serif'; g.textAlign = 'center'; g.fillText('游戏结束', 160, 150);
-        g.fillStyle = '#fff'; g.font='14px sans-serif'; g.fillText('按空格重开', 160, 180);
-      }
     };
     window.addEventListener('keydown', (e) => {
       if (!win.el.classList.contains('active')) return;
-      if (e.key === ' ') { if (dead) reset(); e.preventDefault(); return; }
+      if (e.key===' ' && dead) { reset(); return; }
       const d = { ArrowUp:{x:0,y:-1}, ArrowDown:{x:0,y:1}, ArrowLeft:{x:-1,y:0}, ArrowRight:{x:1,y:0} }[e.key];
-      if (d && !(d.x===-dir.x && d.y===-dir.y)) { nextDir = d; e.preventDefault(); }
+      if (d && !(d.x===-dir.x && d.y===-dir.y)) { dir=d; e.preventDefault(); }
     });
     reset(); timer = setInterval(step, 130);
     win.onClose = () => clearInterval(timer);
@@ -1059,54 +884,35 @@ APPS.snake = {
 APPS.paint = {
   name: '画板', icon: '🎨', width: 680, height: 500,
   mount(body) {
-    body.innerHTML = `<div class="paint"><div class="paint-bar"><input type="color" value="#4f7cff"><input type="range" min="1" max="30" value="4"><button class="btn" data-a="eraser">橡皮擦</button><button class="btn" data-a="clear">清空</button></div><div class="paint-wrap"><canvas width="900" height="540"></canvas></div></div>`;
+    body.innerHTML = `<div class="paint"><div class="paint-bar"><input type="color" value="#4f7cff"><input type="range" min="1" max="30" value="4"><button class="btn" data-a="clear">清空</button></div><div class="paint-wrap"><canvas width="900" height="540"></canvas></div></div>`;
     const canvas = body.querySelector('canvas'), g = canvas.getContext('2d');
     const color = body.querySelector('input[type="color"]'), size = body.querySelector('input[type="range"]');
-    let drawing = false, erasing = false, last = null;
+    let drawing = false;
     g.fillStyle = '#fff'; g.fillRect(0,0,900,540);
-    const pos = (e) => { const r = canvas.getBoundingClientRect(); return { x:(e.clientX-r.left)*900/r.width, y:(e.clientY-r.top)*540/r.height }; };
-    canvas.addEventListener('pointerdown', (e) => { drawing=true; last=pos(e); });
-    canvas.addEventListener('pointermove', (e) => {
-      if (!drawing) return;
-      const p = pos(e);
-      g.strokeStyle = erasing ? '#fff' : color.value; g.lineWidth = erasing ? +size.value*2.5 : +size.value; g.lineCap = 'round';
-      g.beginPath(); g.moveTo(last.x, last.y); g.lineTo(p.x, p.y); g.stroke(); last = p;
-    });
-    canvas.addEventListener('pointerup', () => drawing=false);
-    body.querySelector('[data-a="eraser"]').onclick = (e) => { erasing = !erasing; e.target.style.background = erasing ? 'var(--accent)' : ''; };
-    body.querySelector('[data-a="clear"]').onclick = () => { g.fillStyle='#fff'; g.fillRect(0,0,900,540); };
+    const pos = (e) => { const r = canvas.getBoundingClientRect(); return {x:(e.clientX-r.left)*900/r.width, y:(e.clientY-r.top)*540/r.height}; };
+    canvas.addEventListener('pointerdown', (e)=>{ drawing=true; const p=pos(e); g.beginPath(); g.moveTo(p.x, p.y); });
+    canvas.addEventListener('pointermove', (e)=>{ if(!drawing) return; const p=pos(e); g.strokeStyle=color.value; g.lineWidth=size.value; g.lineCap='round'; g.lineTo(p.x, p.y); g.stroke(); });
+    canvas.addEventListener('pointerup', ()=>drawing=false);
+    body.querySelector('[data-a="clear"]').onclick = ()=>{ g.fillStyle='#fff'; g.fillRect(0,0,900,540); };
   }
 };
 
 /* =========================================================
-   6. 系统初始化
+   8. 系统初始化
    ========================================================= */
-const DESKTOP_APPS = [
-  'files', 'notepad', 'calc', 'term', 
-  'imageviewer', 'mediaplayer', 'music', 'paint', 
-  'clock', 'snake', 'settings'
-];
+const DESKTOP_APPS = ['files', 'notepad', 'calc', 'term', 'imageviewer', 'mediaplayer', 'music', 'paint', 'clock', 'snake', 'settings'];
 
 function buildDesktop() {
   const wrap = $('#icons'); wrap.innerHTML = '';
   DESKTOP_APPS.forEach(id => {
     const app = APPS[id];
-    if (!app) return;
-    const d = document.createElement('div');
-    d.className = 'desk-icon';
+    const d = document.createElement('div'); d.className = 'desk-icon';
     d.innerHTML = `<div class="glyph">${app.icon}</div><div class="label">${app.name}</div>`;
-    
     let lastClick = 0;
     d.onclick = (e) => {
-      e.stopPropagation();
-      $$('.desk-icon').forEach(x => x.classList.remove('selected'));
-      d.classList.add('selected');
-
-      const now = Date.now();
-      if (now - lastClick < 350) {
-        openApp(id);
-      }
-      lastClick = now;
+      e.stopPropagation(); $$('.desk-icon').forEach(x => x.classList.remove('selected')); d.classList.add('selected');
+      if (Date.now() - lastClick < 350) openApp(id);
+      lastClick = Date.now();
     };
     wrap.appendChild(d);
   });
@@ -1116,9 +922,7 @@ function buildStartMenu() {
   const grid = $('#smGrid'); grid.innerHTML = '';
   DESKTOP_APPS.forEach(id => {
     const app = APPS[id];
-    if (!app) return;
-    const b = document.createElement('button');
-    b.className = 'sm-app';
+    const b = document.createElement('button'); b.className = 'sm-app';
     b.innerHTML = `<span class="glyph">${app.icon}</span><span>${app.name}</span>`;
     b.onclick = () => { openApp(id); toggleStartMenu(false); };
     grid.appendChild(b);
@@ -1128,8 +932,7 @@ function buildStartMenu() {
 function toggleStartMenu(force) {
   const menu = $('#startMenu'), btn = $('#startBtn');
   const show = force !== undefined ? force : !menu.classList.contains('show');
-  menu.classList.toggle('show', show);
-  btn.classList.toggle('open', show);
+  menu.classList.toggle('show', show); btn.classList.toggle('open', show);
 }
 
 function updateClock() {
@@ -1140,27 +943,12 @@ function updateClock() {
 $('#startBtn').onclick = (e) => { e.stopPropagation(); toggleStartMenu(); };
 $('#desktop').addEventListener('pointerdown', (e) => {
   if (!e.target.closest('.window') && !e.target.closest('.desk-icon')) {
-    $$('.desk-icon').forEach(x => x.classList.remove('selected'));
-    toggleStartMenu(false);
+    $$('.desk-icon').forEach(x => x.classList.remove('selected')); toggleStartMenu(false);
   }
-});
-document.addEventListener('pointerdown', (e) => {
-  const menu = $('#startMenu');
-  if (menu.classList.contains('show') && !e.target.closest('#startMenu') && !e.target.closest('#startBtn')) toggleStartMenu(false);
 });
 
 (function boot() {
-  try {
-    const wall = localStorage.getItem('webos.wall');
-    if (wall) $('#desktop').style.background = wall;
-    const accent = localStorage.getItem('webos.accent');
-    if (accent) document.documentElement.style.setProperty('--accent', accent);
-
-    buildDesktop(); buildStartMenu(); updateClock(); setInterval(updateClock, 1000);
-  } catch (e) {
-    console.error("初始化失败：", e);
-    alert("系统启动失败，请刷新页面重试。错误详情：" + e.message);
-  }
+  buildDesktop(); buildStartMenu(); updateClock(); setInterval(updateClock, 1000);
 })();
 </script>
 </body>
