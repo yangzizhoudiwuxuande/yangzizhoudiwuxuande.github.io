@@ -28,7 +28,8 @@ button { font-family: inherit; cursor: pointer; }
 #menu-bar {
   position: fixed; top: 0; left: 0; right: 0; height: var(--menu-h);
   background: rgba(16, 18, 24, 0.92); backdrop-filter: blur(24px);
-  z-index: 100000; display: flex; align-items: center; padding: 0 8px;
+  z-index: 2147483647; /* 最高层级，防止被遮挡 */
+  display: flex; align-items: center; padding: 0 8px;
   font-size: 12px; color: #e8eaf0; box-shadow: 0 1px 0 rgba(255,255,255,0.08);
 }
 .menu-item {
@@ -44,7 +45,7 @@ button { font-family: inherit; cursor: pointer; }
   background: rgba(30, 32, 40, 0.98); backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 4px 0; min-width: 160px;
-  z-index: 100001;
+  z-index: 2147483647;
 }
 #menu-dropdown li {
   padding: 6px 20px; font-size: 13px; color: #e8eaf0; cursor: pointer; list-style: none;
@@ -92,7 +93,7 @@ button { font-family: inherit; cursor: pointer; }
 .t-ico { font-size: 15px; }
 .t-title { flex: 1; font-size: 13px; color: #dfe4ee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .t-btns { display: flex; gap: 2px; }
-.wbtn { width: 32px; height: 28px; border: none; background: transparent; color: #b8c0d0; border-radius: 5px; font-size: 14px; }
+.wbtn { width: 32px; height: 28px; border: none; background: transparent; color: #b8c0d0; border-radius: 5px; font-size: 14px; touch-action: none; }
 .wbtn:hover { background: rgba(255,255,255,.14); color: #fff; }
 .wbtn.close:hover { background: #e5484d; color: #fff; }
 
@@ -246,7 +247,6 @@ button { font-family: inherit; cursor: pointer; }
 </head>
 <body>
 
-<!-- 全局菜单栏 -->
 <div id="menu-bar"></div>
 <ul id="menu-dropdown"></ul>
 
@@ -374,17 +374,8 @@ const APP_MENUS = {
   default: {
     name: '访达',
     menus: {
-      '文件': [
-        { label: '新建窗口', action: () => openApp('files') },
-        { label: '关闭', action: () => {} }
-      ],
-      '编辑': [
-        { label: '撤销', action: () => document.execCommand('undo') },
-        { label: '剪切', action: () => document.execCommand('cut') },
-        { label: '复制', action: () => document.execCommand('copy') },
-        { label: '粘贴', action: () => document.execCommand('paste') },
-        { label: '全选', action: () => document.execCommand('selectAll') }
-      ],
+      '文件': [{ label: '新建窗口', action: () => openApp('files') }],
+      '编辑': [{ label: '撤销', action: () => document.execCommand('undo') }, { label: '全选', action: () => document.execCommand('selectAll') }],
       '显示': [],
       '窗口': [],
       '帮助': [{ label: 'WebOS 帮助', action: () => alert('WebOS v1.0 帮助') }]
@@ -426,24 +417,10 @@ const APP_MENUS = {
   term: {
     name: '终端',
     menus: {
-      'Shell': [
-        { label: '新建窗口', action: () => openApp('term') },
-        { label: '关闭窗口', action: (w) => closeWin(w) }
-      ],
-      '编辑': [
-        { label: '拷贝', action: () => document.execCommand('copy') },
-        { label: '粘贴', action: () => document.execCommand('paste') },
-        { label: '清除屏幕', action: (w) => { w.body.querySelector('.term-out').innerHTML = ''; } }
-      ],
-      '显示': [
-        { label: '放大字体', action: (w) => { const t = w.body.querySelector('.term'); t.style.fontSize = '14px'; } },
-        { label: '缩小字体', action: (w) => { const t = w.body.querySelector('.term'); t.style.fontSize = '11px'; } },
-        { label: '还原字体', action: (w) => { const t = w.body.querySelector('.term'); t.style.fontSize = '12.5px'; } }
-      ],
-      '窗口': [
-        { label: '最小化', action: (w) => minimizeWin(w) },
-        { label: '关闭', action: (w) => closeWin(w) }
-      ],
+      'Shell': [{ label: '新建窗口', action: () => openApp('term') }, { label: '关闭窗口', action: (w) => closeWin(w) }],
+      '编辑': [{ label: '拷贝', action: () => document.execCommand('copy') }, { label: '粘贴', action: () => document.execCommand('paste') }, { label: '清除屏幕', action: (w) => { w.body.querySelector('.term-out').innerHTML = ''; } }],
+      '显示': [{ label: '放大字体', action: (w) => { const t = w.body.querySelector('.term'); t.style.fontSize = '14px'; } }, { label: '缩小字体', action: (w) => { const t = w.body.querySelector('.term'); t.style.fontSize = '11px'; } }, { label: '还原字体', action: (w) => { const t = w.body.querySelector('.term'); t.style.fontSize = '12.5px'; } }],
+      '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }, { label: '关闭', action: (w) => closeWin(w) }],
       '帮助': [{ label: '终端帮助', action: () => alert('输入 help 查看可用命令') }]
     }
   },
@@ -451,42 +428,18 @@ const APP_MENUS = {
     name: '计算器',
     menus: {
       '文件': [{ label: '关闭', action: (w) => closeWin(w) }],
-      '编辑': [
-        { label: '拷贝结果', action: (w) => {
-          const txt = w.body.querySelector('.calc-res').textContent;
-          navigator.clipboard.writeText(txt).then(() => alert('已复制: ' + txt));
-        }}
-      ],
-      '显示': [
-        { label: '基本模式', action: (w) => {} },
-        { label: '科学模式', action: (w) => alert('科学模式暂未实现') },
-        { label: '显示千位分隔符', action: (w) => {} }
-      ],
-      '转换': [
-        { label: '温度转换', action: (w) => alert('暂未实现') },
-        { label: '货币转换', action: (w) => alert('暂未实现') }
-      ],
+      '编辑': [{ label: '拷贝结果', action: (w) => { const txt = w.body.querySelector('.calc-res').textContent; navigator.clipboard.writeText(txt).then(() => alert('已复制: ' + txt)); } }],
+      '显示': [{ label: '基本模式', action: (w) => {} }, { label: '科学模式', action: (w) => alert('科学模式暂未实现') }],
+      '转换': [{ label: '温度转换', action: (w) => alert('暂未实现') }, { label: '货币转换', action: (w) => alert('暂未实现') }],
       '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
     }
   },
   notepad: {
     name: '记事本',
     menus: {
-      '文件': [
-        { label: '存储', action: (w) => w.body.querySelector('[data-a="save"]')?.click() },
-        { label: '关闭', action: (w) => closeWin(w) }
-      ],
-      '编辑': [
-        { label: '撤销', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('undo'); } },
-        { label: '剪切', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('cut'); } },
-        { label: '拷贝', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('copy'); } },
-        { label: '粘贴', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('paste'); } },
-        { label: '全选', action: (w) => w.body.querySelector('textarea').select() }
-      ],
-      '格式': [
-        { label: '标题', action: (w) => { const ta = w.body.querySelector('textarea'); ta.value = '# 标题\n' + ta.value; } },
-        { label: '正文', action: (w) => { const ta = w.body.querySelector('textarea'); ta.value = ta.value.replace(/^# 标题\n/, ''); } }
-      ],
+      '文件': [{ label: '存储', action: (w) => w.body.querySelector('[data-a="save"]')?.click() }, { label: '关闭', action: (w) => closeWin(w) }],
+      '编辑': [{ label: '撤销', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('undo'); } }, { label: '剪切', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('cut'); } }, { label: '拷贝', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('copy'); } }, { label: '粘贴', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('paste'); } }, { label: '全选', action: (w) => w.body.querySelector('textarea').select() }],
+      '格式': [{ label: '标题', action: (w) => { const ta = w.body.querySelector('textarea'); ta.value = '# 标题\n' + ta.value; } }, { label: '正文', action: (w) => { const ta = w.body.querySelector('textarea'); ta.value = ta.value.replace(/^# 标题\n/, ''); } }],
       '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
     }
   },
@@ -495,10 +448,7 @@ const APP_MENUS = {
     menus: {
       '文件': [{ label: '关闭', action: (w) => closeWin(w) }],
       '显示': [{ label: '缩放以适应', action: (w) => { const img = w.body.querySelector('img'); if(img) { img.style.maxWidth = '100%'; img.style.maxHeight = '100%'; } } }],
-      '工具': [
-        { label: '旋转 90°', action: (w) => { const img = w.body.querySelector('img'); if(img) img.style.transform = (img.style.transform === 'rotate(90deg)' ? '' : 'rotate(90deg)'); } },
-        { label: '显示检查器', action: () => alert('显示图片属性面板') }
-      ],
+      '工具': [{ label: '旋转 90°', action: (w) => { const img = w.body.querySelector('img'); if(img) img.style.transform = (img.style.transform === 'rotate(90deg)' ? '' : 'rotate(90deg)'); } }, { label: '显示检查器', action: () => alert('显示图片属性面板') }],
       '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
     }
   },
@@ -506,10 +456,7 @@ const APP_MENUS = {
     name: '媒体播放器',
     menus: {
       '文件': [{ label: '关闭', action: (w) => closeWin(w) }],
-      '控制': [
-        { label: '播放 / 暂停', action: (w) => { const m = w.body.querySelector('audio, video'); if(m) { m.paused ? m.play() : m.pause(); } } },
-        { label: '停止', action: (w) => { const m = w.body.querySelector('audio, video'); if(m) { m.pause(); m.currentTime = 0; } } }
-      ],
+      '控制': [{ label: '播放 / 暂停', action: (w) => { const m = w.body.querySelector('audio, video'); if(m) { m.paused ? m.play() : m.pause(); } } }, { label: '停止', action: (w) => { const m = w.body.querySelector('audio, video'); if(m) { m.pause(); m.currentTime = 0; } } }],
       '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
     }
   },
@@ -524,11 +471,7 @@ const APP_MENUS = {
   music: {
     name: '音乐',
     menus: {
-      '控制': [
-        { label: '播放 / 暂停', action: (w) => { const m = w.body.querySelector('audio'); if(m) { m.paused ? m.play() : m.pause(); } } },
-        { label: '音量 +', action: (w) => { const m = w.body.querySelector('audio'); if(m) m.volume = Math.min(1, m.volume + 0.1); } },
-        { label: '音量 -', action: (w) => { const m = w.body.querySelector('audio'); if(m) m.volume = Math.max(0, m.volume - 0.1); } }
-      ],
+      '控制': [{ label: '播放 / 暂停', action: (w) => { const m = w.body.querySelector('audio'); if(m) { m.paused ? m.play() : m.pause(); } } }, { label: '音量 +', action: (w) => { const m = w.body.querySelector('audio'); if(m) m.volume = Math.min(1, m.volume + 0.1); } }, { label: '音量 -', action: (w) => { const m = w.body.querySelector('audio'); if(m) m.volume = Math.max(0, m.volume - 0.1); } }],
       '窗口': [{ label: '关闭', action: (w) => closeWin(w) }]
     }
   },
@@ -568,37 +511,25 @@ let activeWin = null;
 
 function renderMenuBar(appId) {
   const config = APP_MENUS[appId] || APP_MENUS.default;
-  
   globalMenuBar.innerHTML = '';
   
-  // 1. 左侧应用名菜单
   const appNameEl = document.createElement('div');
   appNameEl.className = 'menu-item app-name';
   appNameEl.innerHTML = `<span class="menu-logo">◆</span> ${config.name}`;
-  appNameEl.onclick = (e) => { 
-    e.stopPropagation(); 
-    showDropdown(appNameEl, getAppNameMenu(config, appId)); 
-  };
+  appNameEl.onclick = (e) => { e.stopPropagation(); showDropdown(appNameEl, getAppNameMenu(config, appId)); };
   globalMenuBar.appendChild(appNameEl);
   
-  // 2. 右侧其他菜单
   Object.keys(config.menus).forEach(key => {
     const el = document.createElement('div');
     el.className = 'menu-item';
     el.textContent = key;
-    el.onclick = (e) => { 
-      e.stopPropagation(); 
-      showDropdown(el, config.menus[key]); 
-    };
+    el.onclick = (e) => { e.stopPropagation(); showDropdown(el, config.menus[key]); };
     globalMenuBar.appendChild(el);
   });
 }
 
 function getAppNameMenu(config, appId) {
-  const versions = {
-    files: '9.0', term: '4.0', imageviewer: '3.0', pdfviewer: '3.0', mediaplayer: '3.0',
-    calc: '2.0', notepad: '2.0', music: '1.0', settings: '1.0', clock: '1.0', snake: '1.0', paint: '1.0'
-  };
+  const versions = { files: '9.0', term: '4.0', imageviewer: '3.0', pdfviewer: '3.0', mediaplayer: '3.0', calc: '2.0', notepad: '2.0', music: '1.0', settings: '1.0', clock: '1.0', snake: '1.0', paint: '1.0' };
   const version = versions[appId] || '1.0';
   return [
     { label: `关于 ${config.name}`, action: () => alert(`${config.name}\n版本: ${version}\n\nWebOS 内置应用`) },
@@ -610,7 +541,6 @@ function getAppNameMenu(config, appId) {
 }
 
 function showDropdown(anchorEl, items) {
-  // 如果点击同一个菜单项，则关闭下拉
   if (menuDropdown.style.display === 'block' && menuDropdown.dataset.anchor === anchorEl.textContent) {
     menuDropdown.style.display = 'none';
     return;
@@ -620,7 +550,6 @@ function showDropdown(anchorEl, items) {
   menuDropdown.dataset.anchor = anchorEl.textContent;
   menuDropdown.style.display = 'block';
   
-  // 计算位置
   const rect = anchorEl.getBoundingClientRect();
   menuDropdown.style.left = rect.left + 'px';
   menuDropdown.style.top = rect.bottom + 'px';
@@ -631,10 +560,7 @@ function showDropdown(anchorEl, items) {
 
   items.forEach(item => {
     if (item.divider) {
-      const div = document.createElement('li');
-      div.className = 'divider';
-      menuDropdown.appendChild(div);
-      return;
+      const div = document.createElement('li'); div.className = 'divider'; menuDropdown.appendChild(div); return;
     }
     const li = document.createElement('li');
     li.textContent = item.label;
@@ -669,7 +595,6 @@ function focusWin(w) {
     if (x.taskEl) x.taskEl.classList.toggle('active', on && !x.minimized);
   });
   
-  // 更新全局顶栏
   activeWin = w;
   renderMenuBar(w.appId);
 }
@@ -742,7 +667,6 @@ function closeWin(w) {
   const i = winList.indexOf(w);
   if (i >= 0) winList.splice(i, 1);
   
-  // 焦点转移
   const next = winList.filter(x => !x.minimized).sort((a, b) => (+a.el.style.zIndex) - (+b.el.style.zIndex)).pop();
   if (next) {
     focusWin(next);
@@ -798,12 +722,27 @@ function openApp(appId, arg) {
   $('#tasks').appendChild(taskEl);
   w.taskEl = taskEl;
 
-  el.querySelector('.titlebar').addEventListener('pointerdown', (e) => { focusWin(w); startDrag(w, e); });
+  // 标题栏拖拽与点击
+  el.querySelector('.titlebar').addEventListener('pointerdown', (e) => { 
+    if (e.target.closest('.wbtn')) return;
+    focusWin(w); 
+    startDrag(w, e); 
+  });
   el.querySelector('.titlebar').addEventListener('dblclick', () => toggleMax(w));
   el.addEventListener('pointerdown', () => focusWin(w), true);
-  el.querySelector('.min').onclick = (e) => { e.stopPropagation(); minimizeWin(w); };
-  el.querySelector('.max').onclick = (e) => { e.stopPropagation(); toggleMax(w); };
-  el.querySelector('.close').onclick = (e) => { e.stopPropagation(); closeWin(w); };
+
+  // 【关键修复】：使用 pointerdown 替代 click，并阻止默认行为，防止手机端滑动导致点击丢失
+  const bindWinBtn = (sel, fn) => {
+    const btn = el.querySelector(sel);
+    btn.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      fn();
+    });
+  };
+  bindWinBtn('.min', () => minimizeWin(w));
+  bindWinBtn('.max', () => toggleMax(w));
+  bindWinBtn('.close', () => closeWin(w));
 
   initResize(w);
   focusWin(w);
@@ -991,7 +930,6 @@ APPS.files = {
         item.innerHTML = `<div class="fm-ico">${getIcon(displayName, n.type, n.isTrash)}</div><div class="fm-name"></div>`;
         item.querySelector('.fm-name').textContent = displayName;
         
-        // 左键点击
         item.onclick = (e) => {
           e.stopPropagation();
           Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
@@ -1002,7 +940,6 @@ APPS.files = {
           lastClick = now;
         };
 
-        // 右键/长按
         let pressTimer = null;
         const showMenu = (x, y) => {
           selectedPath = currentPath;
@@ -1055,7 +992,6 @@ APPS.files = {
       });
     }
 
-    // 空白处右键菜单
     const listShowMenu = (x, y) => {
       selectedPath = null;
       Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
@@ -1095,7 +1031,6 @@ APPS.files = {
     listEl.addEventListener('pointerup', () => clearTimeout(listPressTimer));
     listEl.addEventListener('pointermove', () => clearTimeout(listPressTimer));
 
-    // 顶部工具栏事件绑定
     body.querySelector('.fm-up').onclick = () => { if (cwd === '/.trash' || cwd === '/') cwd = cwd === '/.trash' ? '/home/guest' : '/'; else cwd = cwd.replace(/\/[^/]+$/, '') || '/'; render(); };
     viewBtn.onclick = () => {
       isListView = !isListView;
@@ -1194,7 +1129,6 @@ APPS.files = {
       }
     });
 
-    // 给当前窗口绑定自定义动作，供顶栏调用
     win.actions = {
       goto: (path) => { cwd = path; selectedPath = null; render(); },
       setView: (type) => {
@@ -1376,7 +1310,6 @@ $('#startBtn').onclick = (e) => { e.stopPropagation(); toggleStartMenu(); };
 $('#desktop').addEventListener('pointerdown', (e) => {
   if (!e.target.closest('.window') && !e.target.closest('.desk-icon')) {
     $$('.desk-icon').forEach(x => x.classList.remove('selected')); toggleStartMenu(false);
-    // 点击桌面恢复默认顶栏
     if (activeWin) {
       activeWin = null;
       renderMenuBar('default');
@@ -1386,7 +1319,7 @@ $('#desktop').addEventListener('pointerdown', (e) => {
 
 (function boot() {
   buildDesktop(); buildStartMenu(); updateClock(); setInterval(updateClock, 1000);
-  renderMenuBar('default'); // 初始化顶栏
+  renderMenuBar('default');
 })();
 </script>
 </body>
