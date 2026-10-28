@@ -11,6 +11,7 @@
 :root {
   --accent: #4f7cff;
   --bar-h: 56px;
+  --menu-h: 28px;
   --win-bg: rgba(28, 30, 38, 0.95);
   --text: #e8eaf0;
   --text-dim: #98a2b3;
@@ -23,9 +24,37 @@ html, body {
 input, textarea { user-select: text; font-family: inherit; }
 button { font-family: inherit; cursor: pointer; }
 
+/* ==================== 全局顶栏 ==================== */
+#menu-bar {
+  position: fixed; top: 0; left: 0; right: 0; height: var(--menu-h);
+  background: rgba(16, 18, 24, 0.92); backdrop-filter: blur(24px);
+  z-index: 100000; display: flex; align-items: center; padding: 0 8px;
+  font-size: 12px; color: #e8eaf0; box-shadow: 0 1px 0 rgba(255,255,255,0.08);
+}
+.menu-item {
+  padding: 0 10px; height: var(--menu-h); display: flex; align-items: center;
+  cursor: pointer; border-radius: 4px;
+}
+.menu-item:hover, .menu-item.active { background: rgba(255,255,255,0.15); }
+.app-name { font-weight: 600; margin-right: 4px; }
+.menu-logo { color: var(--accent); margin-right: 4px; }
+
+#menu-dropdown {
+  position: fixed; display: none;
+  background: rgba(30, 32, 40, 0.98); backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.15); border-radius: 6px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5); padding: 4px 0; min-width: 160px;
+  z-index: 100001;
+}
+#menu-dropdown li {
+  padding: 6px 20px; font-size: 13px; color: #e8eaf0; cursor: pointer; list-style: none;
+}
+#menu-dropdown li:hover { background: var(--accent); }
+#menu-dropdown li.divider { height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; padding: 0; }
+
 /* ==================== 桌面 ==================== */
 #desktop {
-  position: fixed; inset: 0 0 var(--bar-h) 0;
+  position: fixed; top: var(--menu-h); left: 0; right: 0; bottom: var(--bar-h);
   background: var(--wall); background-size: cover; overflow: hidden;
 }
 #icons {
@@ -217,6 +246,10 @@ button { font-family: inherit; cursor: pointer; }
 </head>
 <body>
 
+<!-- 全局菜单栏 -->
+<div id="menu-bar"></div>
+<ul id="menu-dropdown"></ul>
+
 <div id="desktop">
   <div id="icons"></div>
   <div id="windows"></div>
@@ -294,7 +327,7 @@ function getParent(path) {
 }
 
 /* =========================================================
-   2. 全局应用注册表 & 右键菜单逻辑
+   2. 全局应用注册表 & 右键菜单
    ========================================================= */
 const APPS = {};
 const ctxMenu = $('#context-menu');
@@ -335,7 +368,293 @@ function showProperties(name, type, size, path) {
 }
 
 /* =========================================================
-   3. 窗口管理器
+   3. 菜单栏配置与渲染逻辑
+   ========================================================= */
+const APP_MENUS = {
+  default: {
+    name: '访达',
+    menus: {
+      '文件': [
+        { label: '新建窗口', action: () => openApp('files') },
+        { label: '关闭', action: () => {} }
+      ],
+      '编辑': [
+        { label: '撤销', action: () => document.execCommand('undo') },
+        { label: '剪切', action: () => document.execCommand('cut') },
+        { label: '复制', action: () => document.execCommand('copy') },
+        { label: '粘贴', action: () => document.execCommand('paste') },
+        { label: '全选', action: () => document.execCommand('selectAll') }
+      ],
+      '显示': [],
+      '窗口': [],
+      '帮助': [{ label: 'WebOS 帮助', action: () => alert('WebOS v1.0 帮助') }]
+    }
+  },
+  files: {
+    name: '文件',
+    menus: {
+      '文件': [
+        { label: '新建文件夹', action: (w) => w.body.querySelector('[data-a="newdir"]')?.click() },
+        { label: '新建文件', action: (w) => w.body.querySelector('[data-a="newfile"]')?.click() },
+        { divider: true },
+        { label: '关闭窗口', action: (w) => closeWin(w) }
+      ],
+      '编辑': [
+        { label: '复制', action: (w) => w.body.querySelector('[data-a="copy"]')?.click() },
+        { label: '剪切', action: (w) => w.body.querySelector('[data-a="cut"]')?.click() },
+        { label: '粘贴', action: (w) => w.body.querySelector('[data-a="paste"]')?.click() },
+        { label: '重命名', action: (w) => w.body.querySelector('[data-a="rename"]')?.click() },
+        { divider: true },
+        { label: '删除', action: (w) => w.body.querySelector('[data-a="delete"]')?.click() }
+      ],
+      '前往': [
+        { label: '主目录', action: (w) => w.actions?.goto('/home/guest') },
+        { label: '根目录', action: (w) => w.actions?.goto('/') },
+        { label: '废纸篓', action: (w) => w.actions?.goto('/.trash') }
+      ],
+      '显示': [
+        { label: '网格视图', action: (w) => w.actions?.setView('grid') },
+        { label: '列表视图', action: (w) => w.actions?.setView('list') }
+      ],
+      '窗口': [
+        { label: '最小化', action: (w) => minimizeWin(w) },
+        { label: '缩放', action: (w) => toggleMax(w) }
+      ],
+      '帮助': [{ label: '文件管理器帮助', action: () => alert('使用说明：\n1. 可以右键或长按文件弹出菜单\n2. 支持上传各种格式文件并双击打开') }]
+    }
+  },
+  term: {
+    name: '终端',
+    menus: {
+      'Shell': [
+        { label: '新建窗口', action: () => openApp('term') },
+        { label: '关闭窗口', action: (w) => closeWin(w) }
+      ],
+      '编辑': [
+        { label: '拷贝', action: () => document.execCommand('copy') },
+        { label: '粘贴', action: () => document.execCommand('paste') },
+        { label: '清除屏幕', action: (w) => { w.body.querySelector('.term-out').innerHTML = ''; } }
+      ],
+      '显示': [
+        { label: '放大字体', action: (w) => { const t = w.body.querySelector('.term'); t.style.fontSize = '14px'; } },
+        { label: '缩小字体', action: (w) => { const t = w.body.querySelector('.term'); t.style.fontSize = '11px'; } },
+        { label: '还原字体', action: (w) => { const t = w.body.querySelector('.term'); t.style.fontSize = '12.5px'; } }
+      ],
+      '窗口': [
+        { label: '最小化', action: (w) => minimizeWin(w) },
+        { label: '关闭', action: (w) => closeWin(w) }
+      ],
+      '帮助': [{ label: '终端帮助', action: () => alert('输入 help 查看可用命令') }]
+    }
+  },
+  calc: {
+    name: '计算器',
+    menus: {
+      '文件': [{ label: '关闭', action: (w) => closeWin(w) }],
+      '编辑': [
+        { label: '拷贝结果', action: (w) => {
+          const txt = w.body.querySelector('.calc-res').textContent;
+          navigator.clipboard.writeText(txt).then(() => alert('已复制: ' + txt));
+        }}
+      ],
+      '显示': [
+        { label: '基本模式', action: (w) => {} },
+        { label: '科学模式', action: (w) => alert('科学模式暂未实现') },
+        { label: '显示千位分隔符', action: (w) => {} }
+      ],
+      '转换': [
+        { label: '温度转换', action: (w) => alert('暂未实现') },
+        { label: '货币转换', action: (w) => alert('暂未实现') }
+      ],
+      '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
+    }
+  },
+  notepad: {
+    name: '记事本',
+    menus: {
+      '文件': [
+        { label: '存储', action: (w) => w.body.querySelector('[data-a="save"]')?.click() },
+        { label: '关闭', action: (w) => closeWin(w) }
+      ],
+      '编辑': [
+        { label: '撤销', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('undo'); } },
+        { label: '剪切', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('cut'); } },
+        { label: '拷贝', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('copy'); } },
+        { label: '粘贴', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('paste'); } },
+        { label: '全选', action: (w) => w.body.querySelector('textarea').select() }
+      ],
+      '格式': [
+        { label: '标题', action: (w) => { const ta = w.body.querySelector('textarea'); ta.value = '# 标题\n' + ta.value; } },
+        { label: '正文', action: (w) => { const ta = w.body.querySelector('textarea'); ta.value = ta.value.replace(/^# 标题\n/, ''); } }
+      ],
+      '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
+    }
+  },
+  imageviewer: {
+    name: '预览',
+    menus: {
+      '文件': [{ label: '关闭', action: (w) => closeWin(w) }],
+      '显示': [{ label: '缩放以适应', action: (w) => { const img = w.body.querySelector('img'); if(img) { img.style.maxWidth = '100%'; img.style.maxHeight = '100%'; } } }],
+      '工具': [
+        { label: '旋转 90°', action: (w) => { const img = w.body.querySelector('img'); if(img) img.style.transform = (img.style.transform === 'rotate(90deg)' ? '' : 'rotate(90deg)'); } },
+        { label: '显示检查器', action: () => alert('显示图片属性面板') }
+      ],
+      '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
+    }
+  },
+  mediaplayer: {
+    name: '媒体播放器',
+    menus: {
+      '文件': [{ label: '关闭', action: (w) => closeWin(w) }],
+      '控制': [
+        { label: '播放 / 暂停', action: (w) => { const m = w.body.querySelector('audio, video'); if(m) { m.paused ? m.play() : m.pause(); } } },
+        { label: '停止', action: (w) => { const m = w.body.querySelector('audio, video'); if(m) { m.pause(); m.currentTime = 0; } } }
+      ],
+      '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
+    }
+  },
+  pdfviewer: {
+    name: '预览',
+    menus: {
+      '文件': [{ label: '关闭', action: (w) => closeWin(w) }],
+      '显示': [{ label: '单页显示', action: (w) => alert('已单页显示') }, { label: '双页连续', action: (w) => alert('已双页连续') }],
+      '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
+    }
+  },
+  music: {
+    name: '音乐',
+    menus: {
+      '控制': [
+        { label: '播放 / 暂停', action: (w) => { const m = w.body.querySelector('audio'); if(m) { m.paused ? m.play() : m.pause(); } } },
+        { label: '音量 +', action: (w) => { const m = w.body.querySelector('audio'); if(m) m.volume = Math.min(1, m.volume + 0.1); } },
+        { label: '音量 -', action: (w) => { const m = w.body.querySelector('audio'); if(m) m.volume = Math.max(0, m.volume - 0.1); } }
+      ],
+      '窗口': [{ label: '关闭', action: (w) => closeWin(w) }]
+    }
+  },
+  clock: {
+    name: '时钟',
+    menus: {
+      '显示': [{ label: '世界时钟', action: () => alert('显示世界时钟') }, { label: '秒表', action: () => alert('显示秒表') }],
+      '窗口': [{ label: '关闭', action: (w) => closeWin(w) }]
+    }
+  },
+  snake: {
+    name: '贪吃蛇',
+    menus: {
+      '游戏': [{ label: '重新开始', action: (w) => { const evt = new KeyboardEvent('keydown', {key: ' '}); window.dispatchEvent(evt); } }],
+      '窗口': [{ label: '关闭', action: (w) => closeWin(w) }]
+    }
+  },
+  paint: {
+    name: '画板',
+    menus: {
+      '文件': [{ label: '清空画布', action: (w) => w.body.querySelector('[data-a="clear"]')?.click() }],
+      '窗口': [{ label: '关闭', action: (w) => closeWin(w) }]
+    }
+  },
+  settings: {
+    name: '系统设置',
+    menus: {
+      '显示': [{ label: '高级选项', action: () => alert('无高级选项') }],
+      '窗口': [{ label: '关闭', action: (w) => closeWin(w) }]
+    }
+  }
+};
+
+const globalMenuBar = $('#menu-bar');
+const menuDropdown = $('#menu-dropdown');
+let activeWin = null;
+
+function renderMenuBar(appId) {
+  const config = APP_MENUS[appId] || APP_MENUS.default;
+  
+  globalMenuBar.innerHTML = '';
+  
+  // 1. 左侧应用名菜单
+  const appNameEl = document.createElement('div');
+  appNameEl.className = 'menu-item app-name';
+  appNameEl.innerHTML = `<span class="menu-logo">◆</span> ${config.name}`;
+  appNameEl.onclick = (e) => { 
+    e.stopPropagation(); 
+    showDropdown(appNameEl, getAppNameMenu(config, appId)); 
+  };
+  globalMenuBar.appendChild(appNameEl);
+  
+  // 2. 右侧其他菜单
+  Object.keys(config.menus).forEach(key => {
+    const el = document.createElement('div');
+    el.className = 'menu-item';
+    el.textContent = key;
+    el.onclick = (e) => { 
+      e.stopPropagation(); 
+      showDropdown(el, config.menus[key]); 
+    };
+    globalMenuBar.appendChild(el);
+  });
+}
+
+function getAppNameMenu(config, appId) {
+  const versions = {
+    files: '9.0', term: '4.0', imageviewer: '3.0', pdfviewer: '3.0', mediaplayer: '3.0',
+    calc: '2.0', notepad: '2.0', music: '1.0', settings: '1.0', clock: '1.0', snake: '1.0', paint: '1.0'
+  };
+  const version = versions[appId] || '1.0';
+  return [
+    { label: `关于 ${config.name}`, action: () => alert(`${config.name}\n版本: ${version}\n\nWebOS 内置应用`) },
+    { divider: true },
+    { label: '偏好设置...', action: () => { if(APPS.settings) openApp('settings'); } },
+    { divider: true },
+    { label: `退出 ${config.name}`, action: (w) => { if(w) closeWin(w); } }
+  ];
+}
+
+function showDropdown(anchorEl, items) {
+  // 如果点击同一个菜单项，则关闭下拉
+  if (menuDropdown.style.display === 'block' && menuDropdown.dataset.anchor === anchorEl.textContent) {
+    menuDropdown.style.display = 'none';
+    return;
+  }
+  
+  menuDropdown.innerHTML = '';
+  menuDropdown.dataset.anchor = anchorEl.textContent;
+  menuDropdown.style.display = 'block';
+  
+  // 计算位置
+  const rect = anchorEl.getBoundingClientRect();
+  menuDropdown.style.left = rect.left + 'px';
+  menuDropdown.style.top = rect.bottom + 'px';
+  
+  if (rect.left + 180 > window.innerWidth) {
+    menuDropdown.style.left = (window.innerWidth - 180) + 'px';
+  }
+
+  items.forEach(item => {
+    if (item.divider) {
+      const div = document.createElement('li');
+      div.className = 'divider';
+      menuDropdown.appendChild(div);
+      return;
+    }
+    const li = document.createElement('li');
+    li.textContent = item.label;
+    li.onclick = (e) => {
+      e.stopPropagation();
+      menuDropdown.style.display = 'none';
+      if (item.action) item.action(activeWin);
+    };
+    menuDropdown.appendChild(li);
+  });
+}
+
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('#menu-bar') && !e.target.closest('#menu-dropdown')) {
+    menuDropdown.style.display = 'none';
+  }
+});
+
+/* =========================================================
+   4. 窗口管理器
    ========================================================= */
 const winList = [];
 let zTop = 10;
@@ -349,6 +668,10 @@ function focusWin(w) {
     x.el.classList.toggle('active', on);
     if (x.taskEl) x.taskEl.classList.toggle('active', on && !x.minimized);
   });
+  
+  // 更新全局顶栏
+  activeWin = w;
+  renderMenuBar(w.appId);
 }
 
 function startDrag(w, e) {
@@ -418,8 +741,15 @@ function closeWin(w) {
   if (w.taskEl) w.taskEl.remove();
   const i = winList.indexOf(w);
   if (i >= 0) winList.splice(i, 1);
+  
+  // 焦点转移
   const next = winList.filter(x => !x.minimized).sort((a, b) => (+a.el.style.zIndex) - (+b.el.style.zIndex)).pop();
-  if (next) focusWin(next);
+  if (next) {
+    focusWin(next);
+  } else {
+    activeWin = null;
+    renderMenuBar('default');
+  }
 }
 
 function openApp(appId, arg) {
@@ -483,7 +813,7 @@ function openApp(appId, arg) {
 }
 
 /* =========================================================
-   4. 文件查看器
+   5. 文件查看器
    ========================================================= */
 APPS.imageviewer = {
   name: '图片查看器', icon: '🖼️', width: 640, height: 480,
@@ -535,7 +865,7 @@ APPS.mediaplayer = {
 };
 
 /* =========================================================
-   5. 终端
+   6. 终端
    ========================================================= */
 APPS.term = {
   name: '终端', icon: '⌨️', width: 680, height: 430,
@@ -559,7 +889,7 @@ APPS.term = {
       clear: () => { out.innerHTML = ''; return ''; }
     };
 
-    print('WebOS Terminal v1.0   输入 help 查看命令\n');
+    print('WebOS Terminal v4.0   输入 help 查看命令\n');
     updatePrompt();
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
@@ -575,11 +905,11 @@ APPS.term = {
 };
 
 /* =========================================================
-   6. 文件管理器 (完整菜单栏 + 右键菜单)
+   7. 文件管理器
    ========================================================= */
 APPS.files = {
   name: '文件', icon: '📁', width: 660, height: 480,
-  mount(body) {
+  mount(body, win) {
     let cwd = '/home/guest'; let selectedPath = null;
     let isListView = false;
 
@@ -864,12 +1194,22 @@ APPS.files = {
       }
     });
 
+    // 给当前窗口绑定自定义动作，供顶栏调用
+    win.actions = {
+      goto: (path) => { cwd = path; selectedPath = null; render(); },
+      setView: (type) => {
+        isListView = (type === 'list');
+        listEl.className = 'fm-list ' + (isListView ? 'list-view' : 'grid-view');
+        viewBtn.textContent = isListView ? '▤ 网格' : '▦ 列表';
+      }
+    };
+
     render();
   }
 };
 
 /* =========================================================
-   7. 其余应用
+   8. 其余应用
    ========================================================= */
 APPS.notepad = {
   name: '记事本', icon: '📝', width: 580, height: 440,
@@ -990,7 +1330,7 @@ APPS.paint = {
 };
 
 /* =========================================================
-   8. 系统初始化
+   9. 系统初始化
    ========================================================= */
 const DESKTOP_APPS = ['files', 'notepad', 'calc', 'term', 'imageviewer', 'mediaplayer', 'music', 'paint', 'clock', 'snake', 'settings'];
 
@@ -1036,11 +1376,17 @@ $('#startBtn').onclick = (e) => { e.stopPropagation(); toggleStartMenu(); };
 $('#desktop').addEventListener('pointerdown', (e) => {
   if (!e.target.closest('.window') && !e.target.closest('.desk-icon')) {
     $$('.desk-icon').forEach(x => x.classList.remove('selected')); toggleStartMenu(false);
+    // 点击桌面恢复默认顶栏
+    if (activeWin) {
+      activeWin = null;
+      renderMenuBar('default');
+    }
   }
 });
 
 (function boot() {
   buildDesktop(); buildStartMenu(); updateClock(); setInterval(updateClock, 1000);
+  renderMenuBar('default'); // 初始化顶栏
 })();
 </script>
 </body>
