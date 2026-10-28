@@ -28,7 +28,7 @@ button { font-family: inherit; cursor: pointer; }
 #menu-bar {
   position: fixed; top: 0; left: 0; right: 0; height: var(--menu-h);
   background: rgba(16, 18, 24, 0.92); backdrop-filter: blur(24px);
-  z-index: 2147483647; /* 最高层级，防止被遮挡 */
+  z-index: 2147483647;
   display: flex; align-items: center; padding: 0 8px;
   font-size: 12px; color: #e8eaf0; box-shadow: 0 1px 0 rgba(255,255,255,0.08);
 }
@@ -145,7 +145,7 @@ button { font-family: inherit; cursor: pointer; }
 .btn {
   height: 28px; padding: 0 8px; border: 1px solid rgba(255,255,255,.15);
   border-radius: 6px; background: rgba(255,255,255,.07); color: #d6dbe6; font-size: 12px;
-  white-space: nowrap;
+  white-space: nowrap; touch-action: none; /* 防止手机端点击丢失 */
 }
 .btn:active { background: rgba(255,255,255,.2); }
 .btn.primary { background: var(--accent); border-color: transparent; color: #fff; }
@@ -193,7 +193,7 @@ button { font-family: inherit; cursor: pointer; }
 .fm-list.list-view .fm-ico { font-size: 22px; }
 .fm-list.list-view .fm-name { font-size: 13px; text-align: left; }
 
-.fm-item { border-radius: 7px; cursor: pointer; border: 1px solid transparent; }
+.fm-item { border-radius: 7px; cursor: pointer; border: 1px solid transparent; touch-action: pan-y; /* 允许垂直滚动，防止误触长按 */ }
 .fm-item.selected { background: rgba(79,124,255,.25); border-color: rgba(79,124,255,.5); }
 
 /* ==================== 各应用样式 ==================== */
@@ -206,7 +206,7 @@ button { font-family: inherit; cursor: pointer; }
 .calc-expr { font-size: 14px; color: var(--text-dim); min-height: 20px; word-break: break-all; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .calc-res { font-size: 32px; font-weight: 600; min-height: 38px; }
 .calc-keys { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 12px; }
-.calc-keys button { border: none; border-radius: 8px; background: rgba(255,255,255,.08); color: #e8eaf0; font-size: 20px; font-weight: 500; transition: background 0.1s; }
+.calc-keys button { border: none; border-radius: 8px; background: rgba(255,255,255,.08); color: #e8eaf0; font-size: 20px; font-weight: 500; transition: background 0.1s; touch-action: none; }
 .calc-keys button:active { background: rgba(255,255,255,.25); transform: scale(0.95); }
 
 .music-app { display: flex; flex-direction: column; height: 100%; background: linear-gradient(180deg, #2b2e3b 0%, #1a1c24 100%); }
@@ -345,11 +345,12 @@ function showContextMenu(x, y, items) {
     const li = document.createElement('li');
     li.textContent = item.label;
     if (item.danger) li.classList.add('danger');
-    li.onclick = (e) => {
+    li.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       ctxMenu.style.display = 'none';
       if (item.action) item.action();
-    };
+    });
     ctxMenu.appendChild(li);
   });
 
@@ -385,18 +386,18 @@ const APP_MENUS = {
     name: '文件',
     menus: {
       '文件': [
-        { label: '新建文件夹', action: (w) => w.body.querySelector('[data-a="newdir"]')?.click() },
-        { label: '新建文件', action: (w) => w.body.querySelector('[data-a="newfile"]')?.click() },
+        { label: '新建文件夹', action: (w) => w.body.querySelector('[data-a="newdir"]')?.dispatchEvent(new Event('pointerdown')) },
+        { label: '新建文件', action: (w) => w.body.querySelector('[data-a="newfile"]')?.dispatchEvent(new Event('pointerdown')) },
         { divider: true },
         { label: '关闭窗口', action: (w) => closeWin(w) }
       ],
       '编辑': [
-        { label: '复制', action: (w) => w.body.querySelector('[data-a="copy"]')?.click() },
-        { label: '剪切', action: (w) => w.body.querySelector('[data-a="cut"]')?.click() },
-        { label: '粘贴', action: (w) => w.body.querySelector('[data-a="paste"]')?.click() },
-        { label: '重命名', action: (w) => w.body.querySelector('[data-a="rename"]')?.click() },
+        { label: '复制', action: (w) => w.body.querySelector('[data-a="copy"]')?.dispatchEvent(new Event('pointerdown')) },
+        { label: '剪切', action: (w) => w.body.querySelector('[data-a="cut"]')?.dispatchEvent(new Event('pointerdown')) },
+        { label: '粘贴', action: (w) => w.body.querySelector('[data-a="paste"]')?.dispatchEvent(new Event('pointerdown')) },
+        { label: '重命名', action: (w) => w.body.querySelector('[data-a="rename"]')?.dispatchEvent(new Event('pointerdown')) },
         { divider: true },
-        { label: '删除', action: (w) => w.body.querySelector('[data-a="delete"]')?.click() }
+        { label: '删除', action: (w) => w.body.querySelector('[data-a="delete"]')?.dispatchEvent(new Event('pointerdown')) }
       ],
       '前往': [
         { label: '主目录', action: (w) => w.actions?.goto('/home/guest') },
@@ -437,7 +438,7 @@ const APP_MENUS = {
   notepad: {
     name: '记事本',
     menus: {
-      '文件': [{ label: '存储', action: (w) => w.body.querySelector('[data-a="save"]')?.click() }, { label: '关闭', action: (w) => closeWin(w) }],
+      '文件': [{ label: '存储', action: (w) => w.body.querySelector('[data-a="save"]')?.dispatchEvent(new Event('pointerdown')) }, { label: '关闭', action: (w) => closeWin(w) }],
       '编辑': [{ label: '撤销', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('undo'); } }, { label: '剪切', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('cut'); } }, { label: '拷贝', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('copy'); } }, { label: '粘贴', action: (w) => { w.body.querySelector('textarea').focus(); document.execCommand('paste'); } }, { label: '全选', action: (w) => w.body.querySelector('textarea').select() }],
       '格式': [{ label: '标题', action: (w) => { const ta = w.body.querySelector('textarea'); ta.value = '# 标题\n' + ta.value; } }, { label: '正文', action: (w) => { const ta = w.body.querySelector('textarea'); ta.value = ta.value.replace(/^# 标题\n/, ''); } }],
       '窗口': [{ label: '最小化', action: (w) => minimizeWin(w) }]
@@ -492,7 +493,7 @@ const APP_MENUS = {
   paint: {
     name: '画板',
     menus: {
-      '文件': [{ label: '清空画布', action: (w) => w.body.querySelector('[data-a="clear"]')?.click() }],
+      '文件': [{ label: '清空画布', action: (w) => w.body.querySelector('[data-a="clear"]')?.dispatchEvent(new Event('pointerdown')) }],
       '窗口': [{ label: '关闭', action: (w) => closeWin(w) }]
     }
   },
@@ -722,7 +723,6 @@ function openApp(appId, arg) {
   $('#tasks').appendChild(taskEl);
   w.taskEl = taskEl;
 
-  // 标题栏拖拽与点击
   el.querySelector('.titlebar').addEventListener('pointerdown', (e) => { 
     if (e.target.closest('.wbtn')) return;
     focusWin(w); 
@@ -731,7 +731,7 @@ function openApp(appId, arg) {
   el.querySelector('.titlebar').addEventListener('dblclick', () => toggleMax(w));
   el.addEventListener('pointerdown', () => focusWin(w), true);
 
-  // 【关键修复】：使用 pointerdown 替代 click，并阻止默认行为，防止手机端滑动导致点击丢失
+  // 统一改用 pointerdown 响应
   const bindWinBtn = (sel, fn) => {
     const btn = el.querySelector(sel);
     btn.addEventListener('pointerdown', (e) => {
@@ -930,63 +930,75 @@ APPS.files = {
         item.innerHTML = `<div class="fm-ico">${getIcon(displayName, n.type, n.isTrash)}</div><div class="fm-name"></div>`;
         item.querySelector('.fm-name').textContent = displayName;
         
-        item.onclick = (e) => {
+        // 改用 pointerdown 处理选中与双击
+        let pressTimer = null;
+        let isLongPress = false;
+
+        item.addEventListener('pointerdown', (e) => {
           e.stopPropagation();
           Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
           item.classList.add('selected');
           selectedPath = currentPath;
-          const now = Date.now();
-          if (now - lastClick < 350) { openFileOrDir(n, key, n.isTrash); }
-          lastClick = now;
-        };
+          isLongPress = false;
 
-        let pressTimer = null;
-        const showMenu = (x, y) => {
-          selectedPath = currentPath;
-          Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
-          item.classList.add('selected');
-
-          showContextMenu(x, y, [
-            { label: '打开', action: () => openFileOrDir(n, key, n.isTrash) },
-            { label: '打开方式', action: () => {
-              const appId = prompt('输入打开方式 (notepad, imageviewer, mediaplayer, pdfviewer):', 'notepad');
-              if (appId === 'notepad') openApp('notepad', { content: n.content || '无法读取' });
-              else if (appId === 'imageviewer') openApp('imageviewer', n);
-              else if (appId === 'mediaplayer') openApp('mediaplayer', { type: n.mime && n.mime.includes('video') ? 'video' : 'audio', fileNode: n });
-              else if (appId === 'pdfviewer') openApp('pdfviewer', n);
-            }},
-            { divider: true },
-            { label: '复制', action: () => { Clipboard = { action: 'copy', path: currentPath }; } },
-            { label: '重命名', action: () => {
-              const par = getParent(currentPath);
-              const newName = prompt('输入新名称:', displayName);
-              if (newName && newName !== displayName && par && par.parent) {
-                if (par.parent.children[newName]) return alert('已存在同名文件');
-                par.parent.children[newName] = par.parent.children[par.name];
-                delete par.parent.children[par.name];
-                render();
-              }
-            }},
-            { label: '删除', danger: true, action: () => {
-              const par = getParent(currentPath);
-              if (par && par.parent) {
-                if (confirm(`确定要删除 ${displayName} 吗？`)) {
-                  n._originalPath = cwd; 
-                  FS.children['.trash'].children[par.name] = n;
+          pressTimer = setTimeout(() => {
+            isLongPress = true;
+            // 长按弹出菜单
+            showContextMenu(e.clientX, e.clientY, [
+              { label: '打开', action: () => openFileOrDir(n, key, n.isTrash) },
+              { label: '打开方式', action: () => {
+                const appId = prompt('输入打开方式 (notepad, imageviewer, mediaplayer, pdfviewer):', 'notepad');
+                if (appId === 'notepad') openApp('notepad', { content: n.content || '无法读取' });
+                else if (appId === 'imageviewer') openApp('imageviewer', n);
+                else if (appId === 'mediaplayer') openApp('mediaplayer', { type: n.mime && n.mime.includes('video') ? 'video' : 'audio', fileNode: n });
+                else if (appId === 'pdfviewer') openApp('pdfviewer', n);
+              }},
+              { divider: true },
+              { label: '复制', action: () => { Clipboard = { action: 'copy', path: currentPath }; } },
+              { label: '重命名', action: () => {
+                const par = getParent(currentPath);
+                const newName = prompt('输入新名称:', displayName);
+                if (newName && newName !== displayName && par && par.parent) {
+                  if (par.parent.children[newName]) return alert('已存在同名文件');
+                  par.parent.children[newName] = par.parent.children[par.name];
                   delete par.parent.children[par.name];
-                  selectedPath = null; render();
+                  render();
                 }
-              }
-            }},
-            { divider: true },
-            { label: '属性', action: () => showProperties(displayName, n.type, n.size, currentPath) }
-          ]);
-        };
+              }},
+              { label: '删除', danger: true, action: () => {
+                const par = getParent(currentPath);
+                if (par && par.parent) {
+                  if (confirm(`确定要删除 ${displayName} 吗？`)) {
+                    n._originalPath = cwd; 
+                    FS.children['.trash'].children[par.name] = n;
+                    delete par.parent.children[par.name];
+                    selectedPath = null; render();
+                  }
+                }
+              }},
+              { divider: true },
+              { label: '属性', action: () => showProperties(displayName, n.type, n.size, currentPath) }
+            ]);
+            pressTimer = null;
+          }, 500);
+        });
 
-        item.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); showMenu(e.clientX, e.clientY); });
-        item.addEventListener('pointerdown', (e) => { pressTimer = setTimeout(() => { showMenu(e.clientX, e.clientY); pressTimer = null; }, 500); });
-        item.addEventListener('pointerup', () => clearTimeout(pressTimer));
-        item.addEventListener('pointermove', () => clearTimeout(pressTimer));
+        item.addEventListener('pointerup', (e) => {
+          clearTimeout(pressTimer);
+          if (pressTimer !== null && !isLongPress) {
+            const now = Date.now();
+            if (now - lastClick < 350) { openFileOrDir(n, key, n.isTrash); }
+            lastClick = now;
+          }
+        });
+
+        item.addEventListener('pointermove', () => {
+          clearTimeout(pressTimer);
+          pressTimer = null;
+        });
+
+        // 阻止右键默认菜单
+        item.addEventListener('contextmenu', (e) => e.preventDefault());
 
         listEl.appendChild(item);
       });
@@ -1031,18 +1043,23 @@ APPS.files = {
     listEl.addEventListener('pointerup', () => clearTimeout(listPressTimer));
     listEl.addEventListener('pointermove', () => clearTimeout(listPressTimer));
 
-    body.querySelector('.fm-up').onclick = () => { if (cwd === '/.trash' || cwd === '/') cwd = cwd === '/.trash' ? '/home/guest' : '/'; else cwd = cwd.replace(/\/[^/]+$/, '') || '/'; render(); };
-    viewBtn.onclick = () => {
+    // 工具栏辅助绑定，统一使用 pointerdown
+    const bindBtn = (sel, fn) => {
+      body.querySelector(sel).addEventListener('pointerdown', (e) => { e.preventDefault(); fn(e); });
+    };
+
+    bindBtn('.fm-up', () => { if (cwd === '/.trash' || cwd === '/') cwd = cwd === '/.trash' ? '/home/guest' : '/'; else cwd = cwd.replace(/\/[^/]+$/, '') || '/'; render(); });
+    bindBtn('#view-btn', () => {
       isListView = !isListView;
       listEl.className = 'fm-list ' + (isListView ? 'list-view' : 'grid-view');
       viewBtn.textContent = isListView ? '▤ 网格' : '▦ 列表';
-    };
+    });
 
-    body.querySelector('[data-a="newdir"]').onclick = () => { const name = prompt('名称：'); if (name) { getNode(cwd).children[name] = { type: 'dir', children: {} }; render(); } };
-    body.querySelector('[data-a="newfile"]').onclick = () => { const name = prompt('文件名：'); if (name) { getNode(cwd).children[name] = { type: 'file', content: '', mime: 'text/plain' }; render(); } };
-    body.querySelector('[data-a="copy"]').onclick = () => { if (selectedPath) Clipboard = { action: 'copy', path: selectedPath }; else alert('请先选择文件'); };
-    body.querySelector('[data-a="cut"]').onclick = () => { if (selectedPath) Clipboard = { action: 'cut', path: selectedPath }; else alert('请先选择文件'); };
-    body.querySelector('[data-a="paste"]').onclick = () => {
+    bindBtn('[data-a="newdir"]', () => { const name = prompt('名称：'); if (name) { getNode(cwd).children[name] = { type: 'dir', children: {} }; render(); } });
+    bindBtn('[data-a="newfile"]', () => { const name = prompt('文件名：'); if (name) { getNode(cwd).children[name] = { type: 'file', content: '', mime: 'text/plain' }; render(); } });
+    bindBtn('[data-a="copy"]', () => { if (selectedPath) Clipboard = { action: 'copy', path: selectedPath }; else alert('请先选择文件'); });
+    bindBtn('[data-a="cut"]', () => { if (selectedPath) Clipboard = { action: 'cut', path: selectedPath }; else alert('请先选择文件'); });
+    bindBtn('[data-a="paste"]', () => {
       if (!Clipboard.path) return alert('剪贴板为空');
       const src = getParent(Clipboard.path), dest = getNode(cwd), name = Clipboard.path.split('/').pop();
       if (cwd.startsWith(Clipboard.path) && Clipboard.path !== cwd) return alert('无法粘贴到自身目录');
@@ -1050,8 +1067,8 @@ APPS.files = {
       dest.children[name] = JSON.parse(JSON.stringify(src.parent.children[name]));
       if (Clipboard.action === 'cut') { delete src.parent.children[name]; Clipboard = { action: null, path: null }; }
       selectedPath = null; render();
-    };
-    body.querySelector('[data-a="rename"]').onclick = () => {
+    });
+    bindBtn('[data-a="rename"]', () => {
       if (!selectedPath) return alert('请先选择要重命名的项目');
       const par = getParent(selectedPath);
       if (par && par.parent) {
@@ -1063,8 +1080,8 @@ APPS.files = {
         delete par.parent.children[oldName];
         selectedPath = null; render();
       }
-    };
-    body.querySelector('[data-a="delete"]').onclick = () => {
+    });
+    bindBtn('[data-a="delete"]', () => {
       if (!selectedPath) return alert('请先选择要删除的文件');
       const par = getParent(selectedPath);
       if (par && par.parent) {
@@ -1074,8 +1091,8 @@ APPS.files = {
         delete par.parent.children[par.name];
         selectedPath = null; render();
       }
-    };
-    body.querySelector('[data-a="restore"]').onclick = () => {
+    });
+    bindBtn('[data-a="restore"]', () => {
       if (!selectedPath) return alert('请先选择要恢复的文件');
       const par = getParent(selectedPath);
       if (par && par.parent) {
@@ -1092,8 +1109,8 @@ APPS.files = {
         delete par.parent.children[par.name];
         selectedPath = null; render();
       }
-    };
-    body.querySelector('[data-a="empty"]').onclick = () => {
+    });
+    bindBtn('[data-a="empty"]', () => {
       if (!selectedPath) return alert('请先选择要彻底删除的文件');
       if (!confirm('彻底删除后无法恢复，确定吗？')) return;
       const par = getParent(selectedPath);
@@ -1101,8 +1118,9 @@ APPS.files = {
         delete par.parent.children[par.name];
         selectedPath = null; render();
       }
-    };
-    body.querySelector('[data-a="upload"]').onclick = () => fileInput.click();
+    });
+    bindBtn('[data-a="upload"]', () => fileInput.click());
+
     fileInput.onchange = (e) => {
       const file = e.target.files[0]; if (!file) return;
       const isText = file.type.startsWith('text/') || /\.(txt|md|json|js|css|html|xml|csv|log)$/i.test(file.name);
@@ -1151,14 +1169,15 @@ APPS.notepad = {
     body.innerHTML = `<div class="app-notepad"><div class="pad-bar"><button class="btn primary" data-a="save">保存</button><span style="font-size:12px;color:#888;margin-left:10px;">${arg && arg.path ? arg.path : '新建文本'}</span></div><textarea spellcheck="false"></textarea></div>`;
     const ta = body.querySelector('textarea'); ta.value = (arg && arg.content) || '';
     let filePath = arg && arg.path;
-    body.querySelector('[data-a="save"]').onclick = () => {
+    body.querySelector('[data-a="save"]').addEventListener('pointerdown', (e) => {
+      e.preventDefault();
       if (!filePath) { const n = prompt('文件名:'); if(!n) return; filePath = `/home/guest/${n}`; body.querySelector('.pad-bar span').textContent = filePath; }
       const par = getParent(filePath);
       if (par && par.parent) {
         par.parent.children[par.name] = { type: 'file', content: ta.value, mime: 'text/plain', size: ta.value.length };
         const btn = body.querySelector('[data-a="save"]'); btn.textContent = '已保存'; setTimeout(()=>btn.textContent='保存', 1000);
       }
-    };
+    });
   }
 };
 
@@ -1176,7 +1195,12 @@ APPS.calc = {
       expr += v; exprEl.textContent = expr;
       try { resEl.textContent = String(evalExpr(expr)); } catch { resEl.textContent = expr.match(/[0-9.]+$/)?.[0] || '0'; }
     };
-    KEYS.forEach(k => { const b = document.createElement('button'); b.textContent = k; b.onclick = () => press(k==='×'?'*':k==='÷'?'/':k==='−'?'-':k); keysEl.appendChild(b); });
+    KEYS.forEach(k => { 
+      const b = document.createElement('button'); 
+      b.textContent = k; 
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); press(k==='×'?'*':k==='÷'?'/':k==='−'?'-':k); });
+      keysEl.appendChild(b); 
+    });
   }
 };
 
@@ -1192,8 +1216,8 @@ APPS.settings = {
     const WALLS = ['linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #43276b 100%)', 'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)', 'linear-gradient(135deg, #42275a 0%, #734b6d 100%)', 'linear-gradient(135deg, #232526 0%, #414345 100%)'];
     const ACCENTS = ['#4f7cff', '#22c55e', '#f59e0b', '#ef4444', '#a855f7'];
     const wl = body.querySelector('.wall-list'), al = body.querySelector('.accent-list');
-    WALLS.forEach(c => { const d = document.createElement('div'); d.className='wall-item'; d.style.background=c; d.onclick=()=>$('#desktop').style.background=c; wl.appendChild(d); });
-    ACCENTS.forEach(c => { const d = document.createElement('div'); d.className='accent-item'; d.style.background=c; d.onclick=()=>document.documentElement.style.setProperty('--accent', c); al.appendChild(d); });
+    WALLS.forEach(c => { const d = document.createElement('div'); d.className='wall-item'; d.style.background=c; d.addEventListener('pointerdown', ()=>$('#desktop').style.background=c); wl.appendChild(d); });
+    ACCENTS.forEach(c => { const d = document.createElement('div'); d.className='accent-item'; d.style.background=c; d.addEventListener('pointerdown', ()=>document.documentElement.style.setProperty('--accent', c)); al.appendChild(d); });
   }
 };
 
@@ -1259,7 +1283,7 @@ APPS.paint = {
     canvas.addEventListener('pointerdown', (e)=>{ drawing=true; const p=pos(e); g.beginPath(); g.moveTo(p.x, p.y); });
     canvas.addEventListener('pointermove', (e)=>{ if(!drawing) return; const p=pos(e); g.strokeStyle=color.value; g.lineWidth=size.value; g.lineCap='round'; g.lineTo(p.x, p.y); g.stroke(); });
     canvas.addEventListener('pointerup', ()=>drawing=false);
-    body.querySelector('[data-a="clear"]').onclick = ()=>{ g.fillStyle='#fff'; g.fillRect(0,0,900,540); };
+    body.querySelector('[data-a="clear"]').addEventListener('pointerdown', (e)=>{ e.preventDefault(); g.fillStyle='#fff'; g.fillRect(0,0,900,540); });
   }
 };
 
@@ -1275,11 +1299,13 @@ function buildDesktop() {
     const d = document.createElement('div'); d.className = 'desk-icon';
     d.innerHTML = `<div class="glyph">${app.icon}</div><div class="label">${app.name}</div>`;
     let lastClick = 0;
-    d.onclick = (e) => {
-      e.stopPropagation(); $$('.desk-icon').forEach(x => x.classList.remove('selected')); d.classList.add('selected');
-      if (Date.now() - lastClick < 350) openApp(id);
-      lastClick = Date.now();
-    };
+    d.addEventListener('pointerdown', (e) => {
+      e.stopPropagation(); 
+      $$('.desk-icon').forEach(x => x.classList.remove('selected')); d.classList.add('selected');
+      const now = Date.now();
+      if (now - lastClick < 350) openApp(id);
+      lastClick = now;
+    });
     wrap.appendChild(d);
   });
 }
@@ -1290,7 +1316,7 @@ function buildStartMenu() {
     const app = APPS[id];
     const b = document.createElement('button'); b.className = 'sm-app';
     b.innerHTML = `<span class="glyph">${app.icon}</span><span>${app.name}</span>`;
-    b.onclick = () => { openApp(id); toggleStartMenu(false); };
+    b.addEventListener('pointerdown', (e) => { e.preventDefault(); openApp(id); toggleStartMenu(false); });
     grid.appendChild(b);
   });
 }
@@ -1306,7 +1332,8 @@ function updateClock() {
   $('#trayClock').textContent = `${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-$('#startBtn').onclick = (e) => { e.stopPropagation(); toggleStartMenu(); };
+$('#startBtn').addEventListener('pointerdown', (e) => { e.stopPropagation(); toggleStartMenu(); });
+
 $('#desktop').addEventListener('pointerdown', (e) => {
   if (!e.target.closest('.window') && !e.target.closest('.desk-icon')) {
     $$('.desk-icon').forEach(x => x.classList.remove('selected')); toggleStartMenu(false);
