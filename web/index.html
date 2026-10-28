@@ -299,6 +299,15 @@ function formatBytes(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
+// 刷新所有打开的文件管理器窗口
+function refreshAllFilesWindows() {
+  winList.forEach(w => {
+    if (w.appId === 'files' && w.actions && w.actions.refresh) {
+      w.actions.refresh();
+    }
+  });
+}
+
 /* =========================================================
    1. 虚拟文件系统
    ========================================================= */
@@ -836,9 +845,29 @@ APPS.term = {
       cd: (args) => { const p = normalizePath(args[0] || '/', cwd); const node = getNode(p); if(!node || node.type!=='dir') return 'Not found'; cwd = p; updatePrompt(); return ''; },
       cat: (args) => { const node = getNode(normalizePath(args[0] || '', cwd)); if(!node || node.type==='dir') return 'Not found'; if(node.url) return '[二进制]'; return node.content; },
       echo: (args) => args.join(' '),
-      mkdir: (args) => { if(!args[0]) return 'usage: mkdir <name>'; const par = getParent(normalizePath(args[0], cwd)); if(!par||par.parent.children[par.name]) return 'Error'; par.parent.children[par.name]={type:'dir',children:{}}; return `Created ${args[0]}`; },
-      touch: (args) => { if(!args[0]) return 'usage: touch <name>'; const par = getParent(normalizePath(args[0], cwd)); if(!par) return 'Error'; if(!par.parent.children[par.name]) par.parent.children[par.name]={type:'file',content:'',mime:'text/plain'}; return `Created ${args[0]}`; },
-      rm: (args) => { const par = getParent(normalizePath(args[0] || '', cwd)); if(!par||!par.parent.children[par.name]) return 'Not found'; delete par.parent.children[par.name]; return `Removed ${args[0]}`; },
+      mkdir: (args) => { 
+        if(!args[0]) return 'usage: mkdir <name>'; 
+        const par = getParent(normalizePath(args[0], cwd)); 
+        if(!par||par.parent.children[par.name]) return 'Error'; 
+        par.parent.children[par.name]={type:'dir',children:{}}; 
+        refreshAllFilesWindows();
+        return `Created ${args[0]}`; 
+      },
+      touch: (args) => { 
+        if(!args[0]) return 'usage: touch <name>'; 
+        const par = getParent(normalizePath(args[0], cwd)); 
+        if(!par) return 'Error'; 
+        if(!par.parent.children[par.name]) par.parent.children[par.name]={type:'file',content:'',mime:'text/plain'}; 
+        refreshAllFilesWindows();
+        return `Created ${args[0]}`; 
+      },
+      rm: (args) => { 
+        const par = getParent(normalizePath(args[0] || '', cwd)); 
+        if(!par||!par.parent.children[par.name]) return 'Not found'; 
+        delete par.parent.children[par.name]; 
+        refreshAllFilesWindows();
+        return `Removed ${args[0]}`; 
+      },
       clear: () => { out.innerHTML = ''; return ''; }
     };
 
@@ -866,7 +895,6 @@ APPS.files = {
     let cwd = '/home/guest'; let selectedPath = null;
     let isListView = false;
 
-    // 终极原生上传方案：透明 input 盖在按钮上方
     body.innerHTML = `
       <div class="fm">
         <div class="fm-bar">
@@ -1059,7 +1087,7 @@ APPS.files = {
     listEl.addEventListener('pointerup', () => clearTimeout(listPressTimer));
     listEl.addEventListener('pointermove', () => clearTimeout(listPressTimer));
 
-    // 绑定其他普通按钮
+    // 普通按钮绑定
     const bindBtn = (sel, fn) => {
       const el = body.querySelector(sel);
       if (el) el.addEventListener('click', (e) => { e.preventDefault(); fn(e); });
@@ -1137,7 +1165,6 @@ APPS.files = {
       }
     });
 
-    // 原生 input 监听
     fileInput.onchange = (e) => {
       const file = e.target.files[0]; if (!file) return;
       const isText = file.type.startsWith('text/') || /\.(txt|md|json|js|css|html|xml|csv|log)$/i.test(file.name);
@@ -1170,7 +1197,8 @@ APPS.files = {
         isListView = (type === 'list');
         listEl.className = 'fm-list ' + (isListView ? 'list-view' : 'grid-view');
         viewBtn.textContent = isListView ? '▤ 网格' : '▦ 列表';
-      }
+      },
+      refresh: render
     };
 
     render();
@@ -1178,23 +1206,62 @@ APPS.files = {
 };
 
 /* =========================================================
-   8. 其余应用
+   8. 记事本（编辑器）
    ========================================================= */
 APPS.notepad = {
   name: '记事本', icon: '📝', width: 580, height: 440,
   mount(body, win, arg) {
-    body.innerHTML = `<div class="app-notepad"><div class="pad-bar"><button class="btn primary" data-a="save">保存</button><span style="font-size:12px;color:#888;margin-left:10px;">${arg && arg.path ? arg.path : '新建文本'}</span></div><textarea spellcheck="false"></textarea></div>`;
-    const ta = body.querySelector('textarea'); ta.value = (arg && arg.content) || '';
+    body.innerHTML = `
+      <div class="app-notepad">
+        <div class="pad-bar">
+          <button class="btn primary" data-a="save" style="touch-action: manipulation;">保存</button>
+          <span style="font-size:12px;color:#888;margin-left:10px;">${arg && arg.path ? arg.path : '新建文本'}</span>
+        </div>
+        <textarea spellcheck="false"></textarea>
+      </div>`;
+    const ta = body.querySelector('textarea'); 
+    ta.value = (arg && arg.content) || '';
     let filePath = arg && arg.path;
-    body.querySelector('[data-a="save"]').onclick = (e) => {
+
+    const saveBtn = body.querySelector('[data-a="save"]');
+    
+    // 使用 pointerup 和 click 双重绑定，确保在手机和电脑上都能触发
+    const handleSave = (e) => {
       e.preventDefault();
-      if (!filePath) { const n = prompt('文件名:'); if(!n) return; filePath = `/home/guest/${n}`; body.querySelector('.pad-bar span').textContent = filePath; }
+      if (!filePath) { 
+        const n = prompt('文件名:'); 
+        if(!n) return; 
+        filePath = `/home/guest/${n}`; 
+        body.querySelector('.pad-bar span').textContent = filePath; 
+      }
+      
       const par = getParent(filePath);
       if (par && par.parent) {
-        par.parent.children[par.name] = { type: 'file', content: ta.value, mime: 'text/plain', size: ta.value.length };
-        const btn = body.querySelector('[data-a="save"]'); btn.textContent = '已保存'; setTimeout(()=>btn.textContent='保存', 1000);
+        // 如果文件已存在，更新内容和大小；如果不存在，创建新文件
+        if (par.parent.children[par.name]) {
+          par.parent.children[par.name].content = ta.value;
+          par.parent.children[par.name].size = ta.value.length;
+        } else {
+          par.parent.children[par.name] = { type: 'file', content: ta.value, mime: 'text/plain', size: ta.value.length };
+        }
+        
+        // 视觉反馈
+        const oldText = saveBtn.textContent;
+        saveBtn.textContent = '已保存';
+        saveBtn.style.background = '#22c55e';
+        setTimeout(() => { saveBtn.textContent = oldText; saveBtn.style.background = 'var(--accent)'; }, 1500);
+        
+        // 【核心修复】通知所有打开的文件管理器刷新界面
+        refreshAllFilesWindows();
       }
     };
+
+    saveBtn.addEventListener('click', handleSave);
+    // 对于不支持 click 的某些触屏环境，加一层保险
+    saveBtn.addEventListener('pointerup', (e) => {
+      // 避免重复触发 click
+      if (e.pointerType !== 'mouse') handleSave(e);
+    });
   }
 };
 
