@@ -7,297 +7,158 @@
 <style>
 /* ==================== 基础 ==================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 :root {
   --accent: #4f7cff;
   --bar-h: 56px;
   --win-bg: rgba(28, 30, 38, 0.95);
-  --win-bg2: rgba(38, 41, 52, 0.95);
   --text: #e8eaf0;
   --text-dim: #98a2b3;
   --wall: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #43276b 100%);
 }
-
 html, body {
-  height: 100%;
-  overflow: hidden;
-  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-  color: var(--text);
-  user-select: none;
-  background: #000;
+  height: 100%; overflow: hidden; font-family: "Segoe UI", "PingFang SC", system-ui, sans-serif;
+  color: var(--text); user-select: none; background: #000;
 }
-
 input, textarea { user-select: text; font-family: inherit; }
 button { font-family: inherit; cursor: pointer; }
 
 /* ==================== 桌面 ==================== */
 #desktop {
-  position: fixed;
-  inset: 0 0 var(--bar-h) 0;
-  background: var(--wall);
-  background-size: cover;
-  overflow: hidden;
-  transition: background .4s;
+  position: fixed; inset: 0 0 var(--bar-h) 0;
+  background: var(--wall); background-size: cover; overflow: hidden;
 }
-
-#desktop::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,.06), transparent 60%);
-  pointer-events: none;
-}
-
 #icons {
-  position: absolute;
-  inset: 0;
-  padding: 16px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 90px);
-  grid-auto-rows: 98px;
-  align-content: start;
-  gap: 6px;
-  z-index: 1;
+  position: absolute; inset: 0; padding: 16px;
+  display: grid; grid-template-columns: repeat(auto-fill, 90px);
+  grid-auto-rows: 98px; align-content: start; gap: 6px; z-index: 1;
 }
-
 .desk-icon {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 4px;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #fff;
-  text-shadow: 0 1px 4px rgba(0,0,0,.9);
-  transition: background .12s;
-  border: 1px solid transparent;
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 8px 4px; border-radius: 8px; cursor: pointer; color: #fff;
+  text-shadow: 0 1px 4px rgba(0,0,0,.9); border: 1px solid transparent;
 }
-
 .desk-icon:hover { background: rgba(255,255,255,.12); }
 .desk-icon.selected { background: rgba(79,124,255,.35); border-color: rgba(255,255,255,.35); }
-.desk-icon .glyph { font-size: 38px; line-height: 1; filter: drop-shadow(0 2px 5px rgba(0,0,0,.45)); }
-.desk-icon .label { font-size: 12px; text-align: center; word-break: break-all; line-height: 1.3; }
+.desk-icon .glyph { font-size: 38px; filter: drop-shadow(0 2px 5px rgba(0,0,0,.45)); }
+.desk-icon .label { font-size: 12px; text-align: center; }
 
 /* ==================== 窗口 ==================== */
 #windows { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
-
 .window {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  background: var(--win-bg);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 10px;
-  box-shadow: 0 18px 50px rgba(0,0,0,.45);
-  overflow: hidden;
-  min-width: 280px;
-  min-height: 150px;
-  pointer-events: auto;
-  animation: winIn .16s ease-out;
-  transition: box-shadow .15s, border-color .15s;
+  position: absolute; display: flex; flex-direction: column;
+  background: var(--win-bg); border: 1px solid rgba(255,255,255,.12);
+  border-radius: 10px; box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  overflow: hidden; min-width: 280px; min-height: 150px;
+  pointer-events: auto; animation: winIn .16s ease-out;
 }
-
-@keyframes winIn {
-  from { opacity: 0; transform: scale(.965) translateY(10px); }
-  to   { opacity: 1; transform: none; }
-}
-
-.window.active {
-  border-color: rgba(255,255,255,.28);
-  box-shadow: 0 26px 70px rgba(0,0,0,.65), 0 0 0 1px rgba(79,124,255,.35);
-}
-
+@keyframes winIn { from { opacity: 0; transform: scale(.965) translateY(10px); } to { opacity: 1; transform: none; } }
+.window.active { border-color: rgba(255,255,255,.28); box-shadow: 0 26px 70px rgba(0,0,0,.65); }
 .window.maxed { border-radius: 0; }
 
 .titlebar {
-  height: 36px;
-  flex: 0 0 36px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 6px 0 12px;
-  background: linear-gradient(to bottom, rgba(255,255,255,.09), rgba(255,255,255,.03));
+  height: 36px; flex: 0 0 36px; display: flex; align-items: center; gap: 8px;
+  padding: 0 6px 0 12px; background: linear-gradient(to bottom, rgba(255,255,255,.09), rgba(255,255,255,.03));
   border-bottom: 1px solid rgba(255,255,255,.08);
 }
-
 .t-ico { font-size: 15px; }
 .t-title { flex: 1; font-size: 13px; color: #dfe4ee; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .t-btns { display: flex; gap: 2px; }
-
-.wbtn {
-  width: 30px; height: 24px;
-  border: none; background: transparent;
-  color: #b8c0d0; border-radius: 5px;
-  font-size: 13px; display: grid; place-items: center;
-}
+.wbtn { width: 30px; height: 24px; border: none; background: transparent; color: #b8c0d0; border-radius: 5px; font-size: 13px; }
 .wbtn:hover { background: rgba(255,255,255,.14); color: #fff; }
 .wbtn.close:hover { background: #e5484d; color: #fff; }
 
 .win-body { flex: 1; overflow: auto; position: relative; font-size: 13px; }
-
-/* 滚动条 */
 .win-body::-webkit-scrollbar { width: 10px; height: 10px; }
 .win-body::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 6px; }
 
 .resizer {
-  position: absolute;
-  right: 0; bottom: 0;
-  width: 16px; height: 16px;
-  cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,.35) 50%);
+  position: absolute; right: 0; bottom: 0; width: 16px; height: 16px;
+  cursor: nwse-resize; background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,.35) 50%);
   border-bottom-right-radius: 10px;
 }
 
 /* ==================== 任务栏 ==================== */
 #taskbar {
-  position: fixed;
-  left: 0; right: 0; bottom: 0;
-  height: var(--bar-h);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  padding-bottom: env(safe-area-inset-bottom);
-  background: rgba(16, 18, 24, .85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid rgba(255,255,255,.09);
-  z-index: 90000;
+  position: fixed; left: 0; right: 0; bottom: 0; height: var(--bar-h);
+  display: flex; align-items: center; gap: 8px; padding: 0 12px; padding-bottom: env(safe-area-inset-bottom);
+  background: rgba(16, 18, 24, .85); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255,255,255,.09); z-index: 90000;
 }
-
 #startBtn {
-  height: 38px;
-  padding: 0 14px;
-  display: flex; align-items: center; gap: 7px;
-  border: none; border-radius: 8px;
-  background: rgba(255,255,255,.08);
-  color: #e8eaf0; font-size: 13px; font-weight: 500;
+  height: 38px; padding: 0 14px; display: flex; align-items: center; gap: 7px;
+  border: none; border-radius: 8px; background: rgba(255,255,255,.08); color: #e8eaf0; font-size: 13px; font-weight: 500;
 }
 #startBtn:hover { background: rgba(255,255,255,.18); }
 #startBtn.open { background: var(--accent); color: #fff; }
 
-#tasks {
-  flex: 1;
-  display: flex;
-  gap: 6px;
-  overflow: hidden;
-}
-
+#tasks { flex: 1; display: flex; gap: 6px; overflow: hidden; }
 .task-item {
-  width: 44px;
-  height: 38px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  background: rgba(255,255,255,.05);
-  color: #c6ccd8;
-  font-size: 18px; /* 图标大小 */
-  transition: background .12s;
+  width: 44px; height: 38px; display: flex; justify-content: center; align-items: center;
+  border: 1px solid transparent; border-radius: 8px; background: rgba(255,255,255,.05);
+  color: #c6ccd8; font-size: 18px;
 }
 .task-item:hover { background: rgba(255,255,255,.14); }
-.task-item.active {
-  background: rgba(79,124,255,.22);
-  border-color: rgba(79,124,255,.5);
-  color: #fff;
-}
-
-#tray {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 8px;
-  font-size: 12px;
-  color: #c6ccd8;
-  font-variant-numeric: tabular-nums;
-}
+.task-item.active { background: rgba(79,124,255,.22); border-color: rgba(79,124,255,.5); color: #fff; }
+#tray { display: flex; align-items: center; gap: 8px; padding: 0 8px; font-size: 12px; color: #c6ccd8; }
 
 /* ==================== 开始菜单 ==================== */
 #startMenu {
-  position: fixed;
-  left: 8px;
-  bottom: calc(var(--bar-h) + 8px);
-  width: 320px;
-  padding: 14px;
-  background: rgba(22, 24, 32, .95);
-  backdrop-filter: blur(28px);
-  border: 1px solid rgba(255,255,255,.13);
-  border-radius: 12px;
-  box-shadow: 0 24px 70px rgba(0,0,0,.65);
-  display: none;
-  z-index: 95000;
+  position: fixed; left: 8px; bottom: calc(var(--bar-h) + 8px); width: 320px; padding: 14px;
+  background: rgba(22, 24, 32, .95); backdrop-filter: blur(28px); border: 1px solid rgba(255,255,255,.13);
+  border-radius: 12px; box-shadow: 0 24px 70px rgba(0,0,0,.65); display: none; z-index: 95000;
 }
 #startMenu.show { display: block; animation: winIn .15s ease-out; }
-.sm-head { font-size: 11px; color: var(--text-dim); margin-bottom: 10px; padding-left: 2px; }
 .sm-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
-.sm-app {
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  padding: 10px 4px; border: none; background: transparent;
-  border-radius: 8px; color: #d6dbe6; font-size: 11px;
-}
+.sm-app { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 4px; border: none; background: transparent; border-radius: 8px; color: #d6dbe6; font-size: 11px; }
 .sm-app:hover { background: rgba(255,255,255,.12); }
 .sm-app .glyph { font-size: 24px; }
 
 /* ==================== 通用组件 ==================== */
 .btn {
-  height: 26px; padding: 0 10px;
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 6px; background: rgba(255,255,255,.07);
-  color: #d6dbe6; font-size: 12px;
-  transition: background .12s;
+  height: 26px; padding: 0 10px; border: 1px solid rgba(255,255,255,.15);
+  border-radius: 6px; background: rgba(255,255,255,.07); color: #d6dbe6; font-size: 12px;
 }
 .btn:hover { background: rgba(255,255,255,.16); }
 .btn:active { transform: scale(0.97); }
 .btn.primary { background: var(--accent); border-color: transparent; color: #fff; }
-.btn.primary:hover { filter: brightness(1.12); }
-.grow { flex: 1; }
-
-/* ==================== 记事本 ==================== */
-.app-notepad { display: flex; flex-direction: column; height: 100%; }
-.pad-bar { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
-.app-notepad textarea {
-  flex: 1; width: 100%; padding: 12px 14px;
-  border: none; outline: none; resize: none;
-  background: transparent; color: #e8eaf0;
-  font-size: 13px; line-height: 1.65; font-family: "Consolas", monospace;
-}
-
-/* ==================== 计算器 ==================== */
-.calc { display: flex; flex-direction: column; height: 100%; }
-.calc-screen { padding: 14px 18px 12px; text-align: right; background: rgba(0,0,0,.28); border-bottom: 1px solid rgba(255,255,255,.07); }
-.calc-expr { font-size: 12px; color: var(--text-dim); height: 17px; }
-.calc-res { font-size: 30px; font-weight: 600; }
-.calc-keys { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
-.calc-keys button { border: none; border-radius: 8px; background: rgba(255,255,255,.08); color: #e8eaf0; font-size: 16px; }
-.calc-keys button:hover { background: rgba(255,255,255,.17); }
-.calc-keys button:active { transform: scale(.95); }
-.calc-keys button.op { background: rgba(79,124,255,.3); color: #cfdcff; }
-.calc-keys button.eq { background: var(--accent); color: #fff; }
-.calc-keys button.fn { background: rgba(255,255,255,.05); color: #a9b3c6; }
 
 /* ==================== 终端 ==================== */
-.term { display: flex; flex-direction: column; height: 100%; padding: 10px 12px; font-family: "Consolas", monospace; font-size: 12.5px; line-height: 1.6; background: rgba(8, 10, 16, .55); }
+.term { display: flex; flex-direction: column; height: 100%; padding: 10px; font-family: "Consolas", monospace; font-size: 12.5px; line-height: 1.6; background: rgba(8, 10, 16, .55); }
 .term-out { flex: 1; overflow-y: auto; white-space: pre-wrap; word-break: break-all; }
 .term-row { color: #cdd6e4; }
 .term-row.cmd { color: #7ee2a8; }
-.term-inputline { display: flex; align-items: flex-start; gap: 7px; flex: 0 0 auto; padding-top: 4px; }
+.term-inputline { display: flex; align-items: flex-start; gap: 7px; padding-top: 4px; }
 .term-prompt { color: #7ee2a8; white-space: nowrap; }
-.term-in { flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #e8eaf0; font-family: inherit; font-size: inherit; }
+.term-in { flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: #e8eaf0; font-size: inherit; }
 
 /* ==================== 文件管理器 ==================== */
 .fm { display: flex; flex-direction: column; height: 100%; }
 .fm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
-.fm-path { flex: 1; min-width: 100px; font-size: 12px; color: var(--text-dim); font-family: monospace; background: rgba(0,0,0,.25); border-radius: 5px; padding: 4px 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-path { flex: 1; font-size: 12px; color: var(--text-dim); font-family: monospace; background: rgba(0,0,0,.25); border-radius: 5px; padding: 4px 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fm-list { flex: 1; overflow: auto; padding: 12px; display: grid; grid-template-columns: repeat(auto-fill, 80px); grid-auto-rows: 85px; align-content: start; gap: 6px; }
-.fm-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border-radius: 7px; cursor: pointer; transition: background .1s; border: 1px solid transparent; }
+.fm-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; border-radius: 7px; cursor: pointer; border: 1px solid transparent; }
 .fm-item:hover { background: rgba(255,255,255,.1); }
 .fm-item.selected { background: rgba(79,124,255,.25); border-color: rgba(79,124,255,.5); }
 .fm-ico { font-size: 28px; }
-.fm-name { font-size: 11px; text-align: center; color: #d6dbe6; word-break: break-all; padding: 0 4px; }
+.fm-name { font-size: 11px; text-align: center; color: #d6dbe6; word-break: break-all; }
 
-/* ==================== 设置 ==================== */
+/* ==================== 各应用样式 ==================== */
+.app-notepad { display: flex; flex-direction: column; height: 100%; }
+.app-notepad textarea { flex: 1; width: 100%; padding: 12px; border: none; outline: none; resize: none; background: transparent; color: #e8eaf0; font-family: monospace; }
+.calc { display: flex; flex-direction: column; height: 100%; }
+.calc-screen { padding: 14px; text-align: right; background: rgba(0,0,0,.28); border-bottom: 1px solid rgba(255,255,255,.07); }
+.calc-res { font-size: 30px; font-weight: 600; }
+.calc-keys { flex: 1; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px; }
+.calc-keys button { border: none; border-radius: 8px; background: rgba(255,255,255,.08); color: #e8eaf0; font-size: 16px; }
+.calc-keys button:hover { background: rgba(255,255,255,.17); }
+
+.music-app { display: flex; flex-direction: column; height: 100%; background: linear-gradient(180deg, #2b2e3b 0%, #1a1c24 100%); }
+.music-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 15px; }
+.music-cover { width: 140px; height: 140px; border-radius: 50%; background: #111; display: grid; place-items: center; font-size: 60px; }
+.music-controls { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 15px; }
+.music-btn { background: transparent; border: none; color: #fff; font-size: 24px; }
+.music-btn.play { font-size: 32px; }
+
 .settings { padding: 18px 20px; }
 .settings h3 { font-size: 12px; font-weight: 600; color: var(--text-dim); margin: 0 0 10px; }
 .settings h3:not(:first-child) { margin-top: 24px; }
@@ -308,39 +169,26 @@ button { font-family: inherit; cursor: pointer; }
 .accent-item { width: 28px; height: 28px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
 .accent-item.sel { border-color: #fff; }
 
-/* ==================== 画板 ==================== */
 .paint { display: flex; flex-direction: column; height: 100%; }
 .paint-bar { display: flex; align-items: center; gap: 10px; padding: 7px 10px; background: rgba(0,0,0,.18); border-bottom: 1px solid rgba(255,255,255,.07); }
 .paint-wrap { flex: 1; background: #fff; display: grid; place-items: center; }
 .paint-wrap canvas { max-width: 100%; max-height: 100%; cursor: crosshair; touch-action: none; }
 
-/* ==================== 时钟 ==================== */
 .clock-app { height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: radial-gradient(circle at 50% 30%, rgba(79,124,255,.22), transparent 65%); }
 .clock-time { font-size: 52px; font-weight: 300; letter-spacing: 2px; }
 .clock-date { font-size: 14px; color: var(--text-dim); }
 
-/* ==================== 贪吃蛇 ==================== */
 .snake { display: flex; flex-direction: column; height: 100%; padding: 10px; gap: 8px; }
 .snake-hud { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); }
 .snake-score { color: #7ee2a8; font-weight: 600; }
 .snake canvas { width: 100%; height: auto; border-radius: 8px; display: block; background: #111827; }
 
-/* ==================== 音乐播放器 ==================== */
-.music-app { display: flex; flex-direction: column; height: 100%; background: linear-gradient(180deg, #2b2e3b 0%, #1a1c24 100%); }
-.music-top { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; gap: 15px; }
-.music-cover { width: 140px; height: 140px; border-radius: 50%; background: #111; display: grid; place-items: center; font-size: 60px; box-shadow: 0 10px 30px rgba(0,0,0,.5); border: 4px solid rgba(255,255,255,.05); transition: transform 0.3s; }
-.music-cover.playing { animation: spin 12s linear infinite; }
-@keyframes spin { 100% { transform: rotate(360deg); } }
-.music-title { font-size: 16px; font-weight: bold; text-align: center; }
-.music-artist { font-size: 12px; color: var(--text-dim); text-align: center; }
-.music-progress { width: 100%; display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-dim); }
-.music-progress input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; }
-.music-controls { display: flex; align-items: center; justify-content: center; gap: 20px; padding: 15px; background: rgba(0,0,0,.2); }
-.music-btn { background: transparent; border: none; color: #fff; font-size: 20px; cursor: pointer; transition: transform 0.1s; }
-.music-btn:hover { color: var(--accent); transform: scale(1.1); }
-.music-btn.play { font-size: 32px; }
-.music-volume { display: flex; align-items: center; gap: 8px; margin-top: 10px; width: 100%; font-size: 16px;}
-.music-volume input { flex: 1; accent-color: var(--accent); }
+/* 各类查看器 */
+.viewer-container { width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #111; overflow: hidden; }
+.viewer-container img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.viewer-container video { max-width: 100%; max-height: 100%; outline: none; }
+.viewer-container iframe { width: 100%; height: 100%; border: none; background: #fff; }
+.viewer-empty { color: #888; font-size: 14px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
 </style>
 </head>
 <body>
@@ -357,8 +205,7 @@ button { font-family: inherit; cursor: pointer; }
 </div>
 
 <div id="startMenu">
-  <div class="sm-head">所有应用</div>
-  <div id="smGrid" class="sm-grid"></div>
+  <div class="sm-grid" id="smGrid"></div>
 </div>
 
 <script>
@@ -375,25 +222,14 @@ const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const FS = {
   type: 'dir',
   children: {
-    home: {
-      type: 'dir',
-      children: {
-        guest: {
-          type: 'dir',
-          children: {
-            'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以尝试使用文件管理器或者终端。' },
-            'todo.txt': { type: 'file', content: '□ 写一个音乐播放器\n□ 优化移动端体验' },
-            documents: { type: 'dir', children: {} }
-          }
-        }
-      }
-    },
-    etc: { type: 'dir', children: { motd: { type: 'file', content: 'WebOS 1.0\n' } } },
-    tmp: { type: 'dir', children: {} }
+    home: { type: 'dir', children: { guest: { type: 'dir', children: {
+      'readme.txt': { type: 'file', content: '欢迎使用 WebOS！\n\n你可以尝试上传图片、PDF、音频或视频，双击即可在原生窗口内查看。' },
+      documents: { type: 'dir', children: {} }
+    }}}}
   }
 };
 
-let Clipboard = { action: null, name: null, path: null }; // 文件剪贴板
+let Clipboard = { action: null, path: null };
 
 function normalizePath(p, cwd = '/') {
   const raw = p.startsWith('/') ? p : cwd + '/' + p;
@@ -486,16 +322,13 @@ function minimizeWin(w) {
   if (w.taskEl) w.taskEl.classList.remove('active');
 }
 
-function restoreWin(w) {
-  w.minimized = false; w.el.style.display = 'flex';
-}
+function restoreWin(w) { w.minimized = false; w.el.style.display = 'flex'; }
 
 function toggleMax(w) {
   const el = w.el;
   if (w.maximized) {
     w.maximized = false; el.classList.remove('maxed');
-    el.style.left = w.prev.left; el.style.top = w.prev.top;
-    el.style.width = w.prev.w; el.style.height = w.prev.h;
+    el.style.left = w.prev.left; el.style.top = w.prev.top; el.style.width = w.prev.w; el.style.height = w.prev.h;
   } else {
     w.prev = { left: el.style.left, top: el.style.top, w: el.style.width, h: el.style.height };
     w.maximized = true; el.classList.add('maxed');
@@ -519,8 +352,7 @@ function openApp(appId, arg) {
   if (!app) return null;
 
   const id = 'w' + (++winSeq);
-  const width = app.width || 600;
-  const height = app.height || 420;
+  const width = app.width || 600, height = app.height || 420;
   const desktop = $('#desktop');
   const dw = desktop.clientWidth, dh = desktop.clientHeight;
   
@@ -535,20 +367,16 @@ function openApp(appId, arg) {
       <span class="t-ico">${app.icon}</span>
       <span class="t-title">${app.name}</span>
       <div class="t-btns">
-        <button class="wbtn min">—</button>
-        <button class="wbtn max">▢</button>
-        <button class="wbtn close">✕</button>
+        <button class="wbtn min">—</button><button class="wbtn max">▢</button><button class="wbtn close">✕</button>
       </div>
     </div>
-    <div class="win-body"></div>
-    <div class="resizer"></div>`;
+    <div class="win-body"></div><div class="resizer"></div>`;
   $('#windows').appendChild(el);
 
   const body = el.querySelector('.win-body');
   const w = { id, appId, el, body, minimized: false, maximized: false, taskEl: null, onClose: null };
   winList.push(w);
 
-  // Dock 栏：只显示图标
   const taskEl = document.createElement('button');
   taskEl.className = 'task-item active';
   taskEl.innerHTML = `<span>${app.icon}</span>`;
@@ -561,12 +389,9 @@ function openApp(appId, arg) {
   $('#tasks').appendChild(taskEl);
   w.taskEl = taskEl;
 
-  el.querySelector('.titlebar').addEventListener('pointerdown', (e) => {
-    focusWin(w); startDrag(w, e);
-  });
+  el.querySelector('.titlebar').addEventListener('pointerdown', (e) => { focusWin(w); startDrag(w, e); });
   el.querySelector('.titlebar').addEventListener('dblclick', () => toggleMax(w));
   el.addEventListener('pointerdown', () => focusWin(w), true);
-
   el.querySelector('.min').onclick = (e) => { e.stopPropagation(); minimizeWin(w); };
   el.querySelector('.max').onclick = (e) => { e.stopPropagation(); toggleMax(w); };
   el.querySelector('.close').onclick = (e) => { e.stopPropagation(); closeWin(w); };
@@ -574,70 +399,64 @@ function openApp(appId, arg) {
   initResize(w);
   focusWin(w);
 
-  try { app.mount(body, w, arg); } catch (err) { body.innerHTML = `<div style="padding:20px;color:red">应用启动失败</div>`; }
+  try { app.mount(body, w, arg); } catch (err) { body.innerHTML = `<div style="padding:20px;color:red">应用崩溃: ${err.message}</div>`; }
   return w;
 }
 
 /* =========================================================
-   3. 应用注册表
+   3. 独立文件查看器 (图片/PDF/媒体)
+   ========================================================= */
+APPS.imageviewer = {
+  name: '图片查看器', icon: '🖼️', width: 640, height: 480,
+  mount(body, win, arg) {
+    if (!arg || !arg.url) {
+      body.innerHTML = `<div class="viewer-container"><div class="viewer-empty"><div style="font-size:40px">🖼️</div><div>请在文件管理器中双击图片打开</div></div></div>`;
+      return;
+    }
+    win.el.querySelector('.t-title').textContent = arg.name || '图片查看器';
+    body.innerHTML = `<div class="viewer-container"><img src="${arg.url}" alt=""></div>`;
+  }
+};
+
+APPS.pdfviewer = {
+  name: 'PDF 阅读器', icon: '📄', width: 800, height: 600,
+  mount(body, win, arg) {
+    if (!arg || !arg.url) {
+      body.innerHTML = `<div class="viewer-container"><div class="viewer-empty"><div style="font-size:40px">📄</div><div>请在文件管理器中双击 PDF 打开</div></div></div>`;
+      return;
+    }
+    win.el.querySelector('.t-title').textContent = arg.name || 'PDF 阅读器';
+    body.innerHTML = `<div class="viewer-container"><iframe src="${arg.url}"></iframe></div>`;
+  }
+};
+
+APPS.mediaplayer = {
+  name: '媒体播放器', icon: '🎬', width: 640, height: 480,
+  mount(body, win, arg) {
+    if (!arg || !arg.fileNode || !arg.fileNode.url) {
+      body.innerHTML = `<div class="viewer-container"><div class="viewer-empty"><div style="font-size:40px">🎬</div><div>请在文件管理器中双击音视频打开</div></div></div>`;
+      return;
+    }
+    const { type, fileNode } = arg;
+    win.el.querySelector('.t-title').textContent = fileNode.name || '媒体播放器';
+    
+    if (type === 'video') {
+      body.innerHTML = `<div class="viewer-container" style="background:#000"><video src="${fileNode.url}" controls autoplay></video></div>`;
+    } else {
+      body.innerHTML = `
+        <div style="padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:20px; background:#1a1c24;">
+          <div style="width:140px; height:140px; border-radius:50%; background:#111; display:grid; place-items:center; font-size:60px; box-shadow:0 10px 30px rgba(0,0,0,.5);">🎵</div>
+          <div style="font-size:14px; color:#fff;">${fileNode.name || '未知音频'}</div>
+          <audio src="${fileNode.url}" controls autoplay style="width:100%"></audio>
+        </div>`;
+    }
+  }
+};
+
+/* =========================================================
+   4. 应用注册表
    ========================================================= */
 const APPS = {};
-
-/* ---------- 3.1 终端 ---------- */
-const CMDS = {
-  help: () => '命令列表: help, ls, cd, pwd, cat, echo, mkdir, touch, rm, date, whoami, open, clear',
-  pwd: (args, ctx) => ctx.cwd,
-  ls: (args, ctx) => {
-    const node = getNode(normalizePath(args[0] || '.', ctx.cwd));
-    if (!node) return 'No such directory';
-    if (node.type === 'file') return args[0];
-    return Object.keys(node.children).map(n => node.children[n].type==='dir'?n+'/':n).join('  ') || '(empty)';
-  },
-  cd: (args, ctx) => {
-    const target = args[0] || '/';
-    const p = normalizePath(target, ctx.cwd);
-    const node = getNode(p);
-    if (!node || node.type !== 'dir') return 'No such directory';
-    ctx.cwd = p;
-    ctx.updatePrompt();
-    return '';
-  },
-  cat: (args, ctx) => {
-    const node = getNode(normalizePath(args[0] || '', ctx.cwd));
-    if (!node || node.type === 'dir') return 'File not found';
-    return node.content;
-  },
-  echo: (args) => args.join(' '),
-  mkdir: (args, ctx) => {
-    if (!args[0]) return 'usage: mkdir <name>';
-    const par = getParent(normalizePath(args[0], ctx.cwd));
-    if (!par || par.parent.type !== 'dir' || par.parent.children[par.name]) return 'Error';
-    par.parent.children[par.name] = { type: 'dir', children: {} };
-    return '';
-  },
-  touch: (args, ctx) => {
-    if (!args[0]) return 'usage: touch <name>';
-    const par = getParent(normalizePath(args[0], ctx.cwd));
-    if (!par || par.parent.type !== 'dir') return 'Error';
-    if (!par.parent.children[par.name]) par.parent.children[par.name] = { type: 'file', content: '' };
-    return '';
-  },
-  rm: (args, ctx) => {
-    const par = getParent(normalizePath(args[0] || '', ctx.cwd));
-    if (!par || !par.parent.children[par.name]) return 'Not found';
-    if (par.parent.children[par.name].type === 'dir' && Object.keys(par.parent.children[par.name].children).length) return 'Directory not empty';
-    delete par.parent.children[par.name];
-    return '';
-  },
-  date: () => new Date().toLocaleString(),
-  whoami: () => 'guest',
-  open: (args) => {
-    if (!APPS[args[0]]) return 'App not found';
-    openApp(args[0]);
-    return 'Launched ' + args[0];
-  },
-  clear: (args, ctx) => { ctx.clear(); return ''; }
-};
 
 APPS.term = {
   name: '终端', icon: '⌨️', width: 680, height: 430,
@@ -647,67 +466,61 @@ APPS.term = {
         <div class="term-out"></div>
         <div class="term-inputline">
           <span class="term-prompt">guest@webos:~$</span>
-          <input class="term-in" autocomplete="off" spellcheck="false" style="width:100%">
+          <input class="term-in" autocomplete="off" spellcheck="false">
         </div>
       </div>`;
-    const out = body.querySelector('.term-out');
-    const input = body.querySelector('.term-in');
-    const promptEl = body.querySelector('.term-prompt');
+    const out = body.querySelector('.term-out'), input = body.querySelector('.term-in'), promptEl = body.querySelector('.term-prompt');
+    let cwd = '/home/guest';
 
-    const ctx = { 
-      cwd: '/home/guest', 
-      clear() { out.innerHTML = ''; },
-      updatePrompt() {
-        const p = ctx.cwd.replace('/home/guest', '~');
-        promptEl.textContent = `guest@webos:${p}$`;
-      }
-    };
-
+    const updatePrompt = () => { promptEl.textContent = `guest@webos:${cwd.replace('/home/guest', '~')}$`; };
     const print = (text, cls) => {
-      const div = document.createElement('div');
-      div.className = 'term-row' + (cls ? ' ' + cls : '');
-      div.textContent = text;
-      out.appendChild(div);
-      out.scrollTop = out.scrollHeight;
+      const d = document.createElement('div'); d.className = 'term-row ' + (cls||''); d.textContent = text;
+      out.appendChild(d); out.scrollTop = out.scrollHeight;
+    };
+    const CMDS = {
+      help: () => '命令: ls, cd, pwd, cat, echo, mkdir, touch, rm, clear',
+      pwd: () => cwd,
+      ls: (args) => {
+        const node = getNode(normalizePath(args[0] || '.', cwd));
+        if (!node) return 'No such directory';
+        if (node.type === 'file') return args[0];
+        return Object.keys(node.children).map(n => node.children[n].type==='dir'?n+'/':n).join('  ') || '(empty)';
+      },
+      cd: (args) => {
+        const p = normalizePath(args[0] || '/', cwd); const node = getNode(p);
+        if (!node || node.type !== 'dir') return 'No such directory';
+        cwd = p; updatePrompt(); return '';
+      },
+      cat: (args) => {
+        const node = getNode(normalizePath(args[0] || '', cwd));
+        if (!node || node.type === 'dir') return 'Not found';
+        if (node.url) return '[二进制文件，无法在终端显示]';
+        return node.content;
+      },
+      clear: () => { out.innerHTML = ''; return ''; }
     };
 
-    print('WebOS Terminal v1.0   ——   输入 help 查看可用命令\n');
-    const history = []; let histIdx = 0;
-
+    print('WebOS Terminal v1.0   输入 help 查看命令\n');
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        const line = input.value;
-        input.value = '';
-        
-        // 打印历史
-        const pStr = promptEl.textContent;
-        print(pStr + ' ' + line, 'cmd');
-        
-        if (line.trim()) { history.push(line); }
-        histIdx = history.length;
-        
-        const res = CMDS[line.split(/\s+/)[0]] ? CMDS[line.split(/\s+/)[0]](line.split(/\s+/).slice(1), ctx) : `未找到命令: ${line.split(/\s+/)[0]}`;
-        if (res) print(res);
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (histIdx > 0) { histIdx--; input.value = history[histIdx] || ''; }
-      } else if (e.key === 'ArrowDown') {
-        e.preventDefault();
-        if (histIdx < history.length - 1) { histIdx++; input.value = history[histIdx] || ''; }
-        else { histIdx = history.length; input.value = ''; }
+        const line = input.value; input.value = '';
+        print(promptEl.textContent + ' ' + line, 'cmd');
+        const parts = line.trim().split(/\s+/);
+        if (parts[0]) {
+          const res = CMDS[parts[0]] ? CMDS[parts[0]](parts.slice(1)) : `未找到命令: ${parts[0]}`;
+          if (res) print(res);
+        }
       }
     });
-    body.addEventListener('click', () => input.focus());
+    body.onclick = () => input.focus();
     setTimeout(() => input.focus(), 40);
   }
 };
 
-/* ---------- 3.2 文件管理器 ---------- */
 APPS.files = {
   name: '文件', icon: '📁', width: 660, height: 480,
   mount(body) {
-    let cwd = '/home/guest';
-    let selectedPath = null;
+    let cwd = '/home/guest'; let selectedPath = null;
 
     body.innerHTML = `
       <div class="fm">
@@ -727,15 +540,21 @@ APPS.files = {
         <div class="fm-list"></div>
       </div>`;
 
-    const pathEl = body.querySelector('.fm-path');
-    const listEl = body.querySelector('.fm-list');
-    const fileInput = body.querySelector('#fm-upload');
+    const pathEl = body.querySelector('.fm-path'), listEl = body.querySelector('.fm-list'), fileInput = body.querySelector('#fm-upload');
+
+    const getIcon = (name, type) => {
+      if (type === 'dir') return '📁';
+      const ext = name.split('.').pop().toLowerCase();
+      if (['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) return '🖼️';
+      if (['mp3','wav','ogg','m4a'].includes(ext)) return '🎵';
+      if (['mp4','webm','mkv'].includes(ext)) return '🎬';
+      if (ext === 'pdf') return '📄';
+      return '📝';
+    };
 
     function render() {
-      pathEl.textContent = cwd;
-      listEl.innerHTML = '';
-      const node = getNode(cwd);
-      if (!node) return;
+      pathEl.textContent = cwd; listEl.innerHTML = '';
+      const node = getNode(cwd); if (!node) return;
       
       const entries = Object.entries(node.children).sort((a, b) => {
         if (a[1].type !== b[1].type) return a[1].type === 'dir' ? -1 : 1;
@@ -747,88 +566,71 @@ APPS.files = {
       entries.forEach(([name, n]) => {
         const item = document.createElement('div');
         item.className = 'fm-item' + (selectedPath === `${cwd}/${name}` ? ' selected' : '');
-        item.innerHTML = `<div class="fm-ico">${n.type === 'dir' ? '📁' : '📄'}</div><div class="fm-name"></div>`;
+        item.innerHTML = `<div class="fm-ico">${getIcon(name, n.type)}</div><div class="fm-name"></div>`;
         item.querySelector('.fm-name').textContent = name;
         
-        item.onclick = (e) => {
-          e.stopPropagation();
-          selectedPath = `${cwd}/${name}`;
-          render();
-        };
+        item.onclick = (e) => { e.stopPropagation(); selectedPath = `${cwd}/${name}`; render(); };
         item.ondblclick = () => {
           if (n.type === 'dir') { cwd = `${cwd}/${name}`; selectedPath = null; render(); }
-          else { openApp('notepad', { content: n.content || '' }); }
+          else {
+            const mime = n.mime || '';
+            const ext = name.split('.').pop().toLowerCase();
+            
+            if (mime.startsWith('image/') || ['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) {
+              openApp('imageviewer', n);
+            } else if (mime === 'application/pdf' || ext === 'pdf') {
+              openApp('pdfviewer', n);
+            } else if (mime.startsWith('audio/') || ['mp3','wav','ogg','m4a'].includes(ext)) {
+              openApp('mediaplayer', { type: 'audio', fileNode: n });
+            } else if (mime.startsWith('video/') || ['mp4','webm','mkv'].includes(ext)) {
+              openApp('mediaplayer', { type: 'video', fileNode: n });
+            } else {
+              openApp('notepad', { content: n.content || '' });
+            }
+          }
         };
         listEl.appendChild(item);
       });
     }
 
-    body.querySelector('.fm-up').onclick = () => {
-      if (cwd === '/') return;
-      cwd = cwd.replace(/\/[^/]+$/, '') || '/';
-      selectedPath = null; render();
-    };
+    body.querySelector('.fm-up').onclick = () => { if (cwd === '/') return; cwd = cwd.replace(/\/[^/]+$/, '') || '/'; selectedPath = null; render(); };
     listEl.onclick = () => { selectedPath = null; render(); };
 
-    // 工具栏事件
-    body.querySelector('[data-a="newdir"]').onclick = () => {
-      const name = prompt('文件夹名称：');
-      if (!name) return;
-      const node = getNode(cwd);
-      if (!node.children[name]) node.children[name] = { type: 'dir', children: {} };
-      render();
-    };
-
-    body.querySelector('[data-a="newfile"]').onclick = () => {
-      const name = prompt('文件名称（例如 a.txt）：');
-      if (!name) return;
-      const node = getNode(cwd);
-      if (!node.children[name]) node.children[name] = { type: 'file', content: '' };
-      render();
-    };
-
-    body.querySelector('[data-a="copy"]').onclick = () => {
-      if (!selectedPath) return alert('请先选择文件或文件夹');
-      Clipboard = { action: 'copy', path: selectedPath };
-    };
-
-    body.querySelector('[data-a="cut"]').onclick = () => {
-      if (!selectedPath) return alert('请先选择文件或文件夹');
-      Clipboard = { action: 'cut', path: selectedPath };
-    };
-
+    body.querySelector('[data-a="newdir"]').onclick = () => { const name = prompt('名称：'); if (name) { getNode(cwd).children[name] = { type: 'dir', children: {} }; render(); } };
+    body.querySelector('[data-a="newfile"]').onclick = () => { const name = prompt('文件名：'); if (name) { getNode(cwd).children[name] = { type: 'file', content: '', mime: 'text/plain' }; render(); } };
+    body.querySelector('[data-a="copy"]').onclick = () => { if (selectedPath) Clipboard = { action: 'copy', path: selectedPath }; };
+    body.querySelector('[data-a="cut"]').onclick = () => { if (selectedPath) Clipboard = { action: 'cut', path: selectedPath }; };
     body.querySelector('[data-a="paste"]').onclick = () => {
       if (!Clipboard.path) return alert('剪贴板为空');
-      const srcPar = getParent(Clipboard.path);
-      const destPar = getNode(cwd);
-      const name = Clipboard.path.split('/').pop();
+      const src = getParent(Clipboard.path), dest = getNode(cwd), name = Clipboard.path.split('/').pop();
+      if (cwd.startsWith(Clipboard.path) && Clipboard.path !== cwd) return alert('无法粘贴到自身目录');
+      if (dest.children[name]) return alert('已存在同名项目');
       
-      // 不能粘贴到自身或子目录的简单检测
-      if (cwd.startsWith(Clipboard.path) && Clipboard.path !== cwd) return alert('无法粘贴到该目录');
-
-      if (destPar.children[name]) return alert('当前目录下已存在同名项目');
-
-      destPar.children[name] = JSON.parse(JSON.stringify(srcPar.parent.children[name])); // 深拷贝
-      
-      if (Clipboard.action === 'cut') {
-        delete srcPar.parent.children[name];
-        Clipboard = { action: null, path: null };
-      }
-      selectedPath = null;
-      render();
+      dest.children[name] = JSON.parse(JSON.stringify(src.parent.children[name]));
+      if (Clipboard.action === 'cut') { delete src.parent.children[name]; Clipboard = { action: null, path: null }; }
+      selectedPath = null; render();
     };
 
     body.querySelector('[data-a="upload"]').onclick = () => fileInput.click();
     fileInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        const node = getNode(cwd);
-        node.children[file.name] = { type: 'file', content: ev.target.result };
+      const file = e.target.files[0]; if (!file) return;
+      
+      const isText = file.type.startsWith('text/') || /\.(txt|md|json|js|css|html|xml|csv|log)$/i.test(file.name);
+      const node = getNode(cwd);
+      
+      if (isText) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          node.children[file.name] = { type: 'file', content: ev.target.result, mime: file.type || 'text/plain', name: file.name };
+          render();
+        };
+        reader.readAsText(file);
+      } else {
+        // 对于图片、PDF、音视频等，生成 Blob URL
+        const url = URL.createObjectURL(file);
+        node.children[file.name] = { type: 'file', url: url, mime: file.type, name: file.name };
         render();
-      };
-      reader.readAsText(file);
+      }
       fileInput.value = '';
     };
 
@@ -836,139 +638,12 @@ APPS.files = {
   }
 };
 
-/* ---------- 3.3 音乐播放器 ---------- */
-APPS.music = {
-  name: '音乐', icon: '🎵', width: 340, height: 480,
-  mount(body, win) {
-    body.innerHTML = `
-      <div class="music-app">
-        <div class="music-top">
-          <div class="music-cover">🎧</div>
-          <div>
-            <div class="music-title">未播放</div>
-            <div class="music-artist">WebOS 音乐盒</div>
-          </div>
-          <div class="music-progress">
-            <span class="curr-time">0:00</span>
-            <input type="range" class="seek" value="0" min="0" max="100">
-            <span class="total-time">0:00</span>
-          </div>
-        </div>
-        <div class="music-controls">
-          <button class="music-btn prev">⏮</button>
-          <button class="music-btn play">▶</button>
-          <button class="music-btn next">⏭</button>
-        </div>
-        <div class="music-volume">
-          <span>🔈</span>
-          <input type="range" class="vol" min="0" max="1" step="0.05" value="0.8">
-        </div>
-      </div>`;
-
-    // 示例音源（使用公开的 SoundHelix 测试音频）
-    const playlist = [
-      { name: "SoundHelix 1", artist: "Demo Audio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
-      { name: "SoundHelix 2", artist: "Demo Audio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
-      { name: "SoundHelix 3", artist: "Demo Audio", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
-    ];
-
-    let currIndex = 0;
-    let audio = new Audio(playlist[currIndex].url);
-
-    const cover = body.querySelector('.music-cover');
-    const titleEl = body.querySelector('.music-title');
-    const artistEl = body.querySelector('.music-artist');
-    const playBtn = body.querySelector('.play');
-    const prevBtn = body.querySelector('.prev');
-    const nextBtn = body.querySelector('.next');
-    const seekEl = body.querySelector('.seek');
-    const currTimeEl = body.querySelector('.curr-time');
-    const totalTimeEl = body.querySelector('.total-time');
-    const volEl = body.querySelector('.vol');
-
-    function fmtTime(sec) {
-      if (isNaN(sec)) return '0:00';
-      const m = Math.floor(sec / 60);
-      const s = Math.floor(sec % 60);
-      return m + ':' + String(s).padStart(2, '0');
-    }
-
-    function loadTrack(idx) {
-      currIndex = idx;
-      audio.src = playlist[idx].url;
-      titleEl.textContent = playlist[idx].name;
-      artistEl.textContent = playlist[idx].artist;
-      audio.load();
-      if (!audio.paused) playBtn.textContent = '▶';
-      cover.classList.remove('playing');
-      seekEl.value = 0;
-      currTimeEl.textContent = '0:00';
-      totalTimeEl.textContent = '0:00';
-    }
-
-    playBtn.onclick = () => {
-      if (audio.paused) {
-        audio.play().catch(e => console.log('播放受阻'));
-        playBtn.textContent = '⏸';
-        cover.classList.add('playing');
-      } else {
-        audio.pause();
-        playBtn.textContent = '▶';
-        cover.classList.remove('playing');
-      }
-    };
-
-    prevBtn.onclick = () => loadTrack((currIndex - 1 + playlist.length) % playlist.length);
-    nextBtn.onclick = () => loadTrack((currIndex + 1) % playlist.length);
-
-    audio.addEventListener('timeupdate', () => {
-      currTimeEl.textContent = fmtTime(audio.currentTime);
-      if (audio.duration) {
-        seekEl.value = (audio.currentTime / audio.duration) * 100;
-        totalTimeEl.textContent = fmtTime(audio.duration);
-      }
-    });
-
-    seekEl.addEventListener('input', () => {
-      if (audio.duration) audio.currentTime = (seekEl.value / 100) * audio.duration;
-    });
-
-    volEl.addEventListener('input', () => {
-      audio.volume = volEl.value;
-    });
-
-    audio.addEventListener('ended', nextBtn.onclick);
-
-    win.onClose = () => {
-      audio.pause();
-      audio.src = '';
-    };
-
-    loadTrack(0);
-  }
-};
-
-/* ---------- 3.4 其他内置应用（记事本/计算器/设置/画板/时钟/贪吃蛇） ---------- */
 APPS.notepad = {
   name: '记事本', icon: '📝', width: 580, height: 440,
   mount(body, win, arg) {
-    body.innerHTML = `
-      <div class="app-notepad">
-        <div class="pad-bar">
-          <button class="btn" data-a="new">新建</button>
-          <button class="btn" data-a="save">保存</button>
-        </div>
-        <textarea spellcheck="false" placeholder="输入内容…"></textarea>
-      </div>`;
+    body.innerHTML = `<div class="app-notepad"><textarea spellcheck="false" placeholder="输入内容…"></textarea></div>`;
     const ta = body.querySelector('textarea');
-    ta.value = (arg && arg.content) || (localStorage.getItem('webos.pad') || '');
-    let timer;
-    ta.addEventListener('input', () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => localStorage.setItem('webos.pad', ta.value), 400);
-    });
-    body.querySelector('[data-a="new"]').onclick = () => { ta.value = ''; localStorage.setItem('webos.pad', ''); };
-    body.querySelector('[data-a="save"]').onclick = () => { localStorage.setItem('webos.pad', ta.value); alert('已保存到本地'); };
+    ta.value = (arg && arg.content) || '';
   }
 };
 
@@ -977,22 +652,11 @@ APPS.calc = {
   mount(body) {
     body.innerHTML = `
       <div class="calc">
-        <div class="calc-screen">
-          <div class="calc-expr"></div>
-          <div class="calc-res">0</div>
-        </div>
+        <div class="calc-screen"><div class="calc-res">0</div></div>
         <div class="calc-keys"></div>
       </div>`;
-    const exprEl = body.querySelector('.calc-expr'), resEl = body.querySelector('.calc-res');
-    const keysEl = body.querySelector('.calc-keys');
-    const KEYS = [
-      { t: 'C', v: 'clear', cls: 'fn' }, { t: '±', v: 'neg', cls: 'fn' }, { t: '%', v: '%', cls: 'fn' }, { t: '÷', v: '/', cls: 'op' },
-      { t: '7', v: '7' }, { t: '8', v: '8' }, { t: '9', v: '9' }, { t: '×', v: '*', cls: 'op' },
-      { t: '4', v: '4' }, { t: '5', v: '5' }, { t: '6', v: '6' }, { t: '−', v: '-', cls: 'op' },
-      { t: '1', v: '1' }, { t: '2', v: '2' }, { t: '3', v: '3' }, { t: '+', v: '+', cls: 'op' },
-      { t: '(', v: '(', cls: 'fn' }, { t: '0', v: '0' }, { t: '.', v: '.' }, { t: ')', v: ')', cls: 'fn' },
-      { t: '=', v: '=', cls: 'eq' }
-    ];
+    const resEl = body.querySelector('.calc-res'), keysEl = body.querySelector('.calc-keys');
+    const KEYS = ['C','±','%','÷','7','8','9','×','4','5','6','−','1','2','3','+','(', '0','.',')','='];
     let expr = '';
     const evalExpr = (s) => {
       const clean = s.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
@@ -1000,23 +664,39 @@ APPS.calc = {
       return Math.round(val * 1e10) / 1e10;
     };
     const press = (v) => {
-      if (v === 'clear') { expr = ''; exprEl.textContent = ' '; resEl.textContent = '0'; return; }
-      if (v === 'neg') { expr = expr ? '-(' + expr + ')' : '-'; }
+      if (v === 'C') { expr = ''; resEl.textContent = '0'; return; }
+      if (v === '±') { expr = expr ? '-(' + expr + ')' : '-'; }
       else if (v === '=') {
-        try { expr = String(evalExpr(expr)); exprEl.textContent = ' '; resEl.textContent = expr; } 
+        try { expr = String(evalExpr(expr)); resEl.textContent = expr; } 
         catch { resEl.textContent = '错误'; expr = ''; }
         return;
       } else expr += v;
-      
-      exprEl.textContent = expr;
       try { resEl.textContent = String(evalExpr(expr)); } catch { resEl.textContent = expr.match(/[0-9.]+$/)?.[0] || '0'; }
     };
     KEYS.forEach(k => {
-      const b = document.createElement('button');
-      b.textContent = k.t; if (k.cls) b.className = k.cls;
-      b.onclick = () => press(k.v);
+      const b = document.createElement('button'); b.textContent = k;
+      b.onclick = () => press(k === '×' ? '*' : k === '÷' ? '/' : k === '−' ? '-' : k);
       keysEl.appendChild(b);
     });
+  }
+};
+
+APPS.music = {
+  name: '音乐', icon: '🎵', width: 340, height: 480,
+  mount(body, win) {
+    body.innerHTML = `
+      <div class="music-app">
+        <div class="music-top">
+          <div class="music-cover">🎧</div>
+          <div style="text-align:center">
+            <div style="font-size:16px;font-weight:bold">SoundHelix Demo</div>
+            <div style="font-size:12px;color:#888">WebOS 在线音乐</div>
+          </div>
+        </div>
+        <div class="music-controls">
+          <audio id="music-audio" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" controls style="width:100%; margin:0 15px 15px;"></audio>
+        </div>
+      </div>`;
   }
 };
 
@@ -1027,35 +707,21 @@ APPS.settings = {
       'linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #43276b 100%)',
       'linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%)',
       'linear-gradient(135deg, #42275a 0%, #734b6d 100%)',
-      'linear-gradient(135deg, #232526 0%, #414345 100%)',
-      'linear-gradient(135deg, #7b4397 0%, #dc2430 100%)'
+      'linear-gradient(135deg, #232526 0%, #414345 100%)'
     ];
     const ACCENTS = ['#4f7cff', '#22c55e', '#f59e0b', '#ef4444', '#a855f7'];
-    body.innerHTML = `
-      <div class="settings">
-        <h3>桌面壁纸</h3>
-        <div class="wall-list"></div>
-        <h3>主题色</h3>
-        <div class="accent-list"></div>
-      </div>`;
-    
-    const curWall = localStorage.getItem('webos.wall') || WALLS[0];
-    const curAccent = localStorage.getItem('webos.accent') || ACCENTS[0];
+    body.innerHTML = `<div class="settings"><h3>桌面壁纸</h3><div class="wall-list"></div><h3>主题色</h3><div class="accent-list"></div></div>`;
     const wl = body.querySelector('.wall-list'), al = body.querySelector('.accent-list');
-
+    
     WALLS.forEach(css => {
-      const d = document.createElement('div');
-      d.className = 'wall-item' + (css === curWall ? ' sel' : '');
+      const d = document.createElement('div'); d.className = 'wall-item';
       d.style.background = css;
-      d.onclick = () => { $$('.wall-item', wl).forEach(x => x.classList.remove('sel')); d.classList.add('sel'); $('#desktop').style.background = css; localStorage.setItem('webos.wall', css); };
+      d.onclick = () => { $('#desktop').style.background = css; localStorage.setItem('webos.wall', css); };
       wl.appendChild(d);
     });
-
     ACCENTS.forEach(c => {
-      const d = document.createElement('div');
-      d.className = 'accent-item' + (c === curAccent ? ' sel' : '');
-      d.style.background = c;
-      d.onclick = () => { $$('.accent-item', al).forEach(x => x.classList.remove('sel')); d.classList.add('sel'); document.documentElement.style.setProperty('--accent', c); localStorage.setItem('webos.accent', c); };
+      const d = document.createElement('div'); d.className = 'accent-item'; d.style.background = c;
+      d.onclick = () => { document.documentElement.style.setProperty('--accent', c); localStorage.setItem('webos.accent', c); };
       al.appendChild(d);
     });
   }
@@ -1104,10 +770,7 @@ APPS.snake = {
       g.strokeStyle = 'rgba(255,255,255,.045)';
       for(let i=1;i<N;i++){ g.beginPath();g.moveTo(i*CELL,0);g.lineTo(i*CELL,320);g.stroke();g.beginPath();g.moveTo(0,i*CELL);g.lineTo(320,i*CELL);g.stroke(); }
       g.fillStyle = '#ef4444'; g.beginPath(); g.arc(food.x*CELL+8, food.y*CELL+8, 6, 0, Math.PI*2); g.fill();
-      snake.forEach((s,i) => {
-        g.fillStyle = i===0 ? '#4ade80' : '#22c55e';
-        g.fillRect(s.x*CELL+1, s.y*CELL+1, CELL-2, CELL-2);
-      });
+      snake.forEach((s,i) => { g.fillStyle = i===0 ? '#4ade80' : '#22c55e'; g.fillRect(s.x*CELL+1, s.y*CELL+1, CELL-2, CELL-2); });
       if (dead) {
         g.fillStyle = 'rgba(0,0,0,.7)'; g.fillRect(0,0,320,320);
         g.fillStyle = '#ff7b72'; g.font = 'bold 24px sans-serif'; g.textAlign = 'center'; g.fillText('游戏结束', 160, 150);
@@ -1148,9 +811,14 @@ APPS.paint = {
 };
 
 /* =========================================================
-   4. 系统初始化
+   5. 系统初始化
    ========================================================= */
-const DESKTOP_APPS = ['files', 'notepad', 'calc', 'term', 'paint', 'music', 'clock', 'snake', 'settings'];
+// 注册桌面显示的 App 列表 (包含新加的 图片查看器 和 媒体播放器)
+const DESKTOP_APPS = [
+  'files', 'notepad', 'calc', 'term', 
+  'imageviewer', 'mediaplayer', 'music', 'paint', 
+  'clock', 'snake', 'settings'
+];
 
 function buildDesktop() {
   const wrap = $('#icons'); wrap.innerHTML = '';
@@ -1192,22 +860,17 @@ function updateClock() {
 }
 
 $('#startBtn').onclick = (e) => { e.stopPropagation(); toggleStartMenu(); };
-
 $('#desktop').addEventListener('pointerdown', (e) => {
   if (!e.target.closest('.window') && !e.target.closest('.desk-icon')) {
     $$('.desk-icon').forEach(x => x.classList.remove('selected'));
     toggleStartMenu(false);
   }
 });
-
 document.addEventListener('pointerdown', (e) => {
   const menu = $('#startMenu');
-  if (menu.classList.contains('show') && !e.target.closest('#startMenu') && !e.target.closest('#startBtn')) {
-    toggleStartMenu(false);
-  }
+  if (menu.classList.contains('show') && !e.target.closest('#startMenu') && !e.target.closest('#startBtn')) toggleStartMenu(false);
 });
 
-// 启动
 (function boot() {
   const wall = localStorage.getItem('webos.wall');
   if (wall) $('#desktop').style.background = wall;
