@@ -232,7 +232,6 @@ button { font-family: inherit; cursor: pointer; }
   <div class="sm-grid" id="smGrid"></div>
 </div>
 
-<!-- 全局右键菜单 -->
 <ul id="context-menu"></ul>
 
 <script>
@@ -300,20 +299,15 @@ function getParent(path) {
 const APPS = {};
 const ctxMenu = $('#context-menu');
 
-// 关闭右键菜单
 document.addEventListener('pointerdown', (e) => {
   if (!e.target.closest('#context-menu')) ctxMenu.style.display = 'none';
 });
 
-// 显示右键菜单
 function showContextMenu(x, y, items) {
   ctxMenu.innerHTML = '';
   items.forEach(item => {
     if (item.divider) {
-      const div = document.createElement('div');
-      div.className = 'divider';
-      ctxMenu.appendChild(div);
-      return;
+      const div = document.createElement('div'); div.className = 'divider'; ctxMenu.appendChild(div); return;
     }
     const li = document.createElement('li');
     li.textContent = item.label;
@@ -326,17 +320,13 @@ function showContextMenu(x, y, items) {
     ctxMenu.appendChild(li);
   });
 
-  // 边缘检测
   const menuW = 160, menuH = items.length * 36;
   const px = Math.min(x, window.innerWidth - menuW - 10);
   const py = Math.min(y, window.innerHeight - menuH - 10);
-  
-  ctxMenu.style.left = px + 'px';
-  ctxMenu.style.top = py + 'px';
+  ctxMenu.style.left = px + 'px'; ctxMenu.style.top = py + 'px';
   ctxMenu.style.display = 'block';
 }
 
-// 通用属性弹窗
 function showProperties(name, type, size, path) {
   const w = openApp('notepad', { 
     content: `【属性】\n\n名称: ${name}\n类型: ${type === 'dir' ? '文件夹' : '文件'}\n大小: ${type === 'dir' ? '--' : formatBytes(size)}\n路径: ${path}`
@@ -585,7 +575,7 @@ APPS.term = {
 };
 
 /* =========================================================
-   6. 文件管理器 (加入右键菜单)
+   6. 文件管理器 (完整菜单栏 + 右键菜单)
    ========================================================= */
 APPS.files = {
   name: '文件', icon: '📁', width: 660, height: 480,
@@ -596,6 +586,23 @@ APPS.files = {
     body.innerHTML = `
       <div class="fm">
         <div class="fm-bar">
+          <div class="normal-tools" style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn" data-a="newdir">新建文件夹</button>
+            <button class="btn" data-a="newfile">新建文件</button>
+            <button class="btn" data-a="copy">复制</button>
+            <button class="btn" data-a="cut">剪切</button>
+            <button class="btn" data-a="paste">粘贴</button>
+            <button class="btn" data-a="rename">重命名</button>
+            <button class="btn primary" data-a="upload">上传文件</button>
+            <button class="btn" data-a="delete" style="color:#ff7b72;">删除</button>
+          </div>
+          <div class="trash-tools" style="display:none; gap:6px; flex-wrap:wrap;">
+            <button class="btn primary" data-a="restore">恢复</button>
+            <button class="btn" data-a="empty" style="color:#ff7b72;">彻底删除</button>
+          </div>
+          <input type="file" id="fm-upload" style="display:none">
+        </div>
+        <div class="fm-bar">
           <button class="btn fm-up" style="padding:0 8px">⬆ 上一级</button>
           <div class="fm-path"></div>
           <button class="btn" id="view-btn">▦ 列表</button>
@@ -603,7 +610,9 @@ APPS.files = {
         <div class="fm-list grid-view"></div>
       </div>`;
 
-    const pathEl = body.querySelector('.fm-path'), listEl = body.querySelector('.fm-list');
+    const pathEl = body.querySelector('.fm-path'), listEl = body.querySelector('.fm-list'), fileInput = body.querySelector('#fm-upload');
+    const normalTools = body.querySelector('.normal-tools'), trashTools = body.querySelector('.trash-tools');
+    const viewBtn = body.querySelector('#view-btn');
 
     const getIcon = (name, type, isTrash) => {
       if (isTrash) return '🗑️';
@@ -630,7 +639,11 @@ APPS.files = {
     };
 
     function render() {
-      pathEl.textContent = cwd === '/.trash' ? '🗑️ 废纸篓' : cwd; 
+      const isTrash = cwd === '/.trash';
+      normalTools.style.display = isTrash ? 'none' : 'flex';
+      trashTools.style.display = isTrash ? 'flex' : 'none';
+      
+      pathEl.textContent = isTrash ? '🗑️ 废纸篓' : cwd; 
       listEl.innerHTML = '';
       const node = getNode(cwd); if (!node) return;
       
@@ -648,22 +661,21 @@ APPS.files = {
         item.innerHTML = `<div class="fm-ico">${getIcon(displayName, n.type, n.isTrash)}</div><div class="fm-name"></div>`;
         item.querySelector('.fm-name').textContent = displayName;
         
-        // 左键点击（选中与双击打开）
+        // 左键点击
         item.onclick = (e) => {
           e.stopPropagation();
           Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
           item.classList.add('selected');
           selectedPath = currentPath;
-
           const now = Date.now();
           if (now - lastClick < 350) { openFileOrDir(n, key, n.isTrash); }
           lastClick = now;
         };
 
-        // 右键/长按 菜单逻辑
+        // 右键/长按
         let pressTimer = null;
         const showMenu = (x, y) => {
-          selectedPath = currentPath; // 选中该文件
+          selectedPath = currentPath;
           Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
           item.classList.add('selected');
 
@@ -692,7 +704,7 @@ APPS.files = {
               const par = getParent(currentPath);
               if (par && par.parent) {
                 if (confirm(`确定要删除 ${displayName} 吗？`)) {
-                  n._originalPath = cwd; // 记录原位
+                  n._originalPath = cwd; 
                   FS.children['.trash'].children[par.name] = n;
                   delete par.parent.children[par.name];
                   selectedPath = null; render();
@@ -705,9 +717,7 @@ APPS.files = {
         };
 
         item.addEventListener('contextmenu', (e) => { e.preventDefault(); e.stopPropagation(); showMenu(e.clientX, e.clientY); });
-        item.addEventListener('pointerdown', (e) => { 
-          pressTimer = setTimeout(() => { showMenu(e.clientX, e.clientY); pressTimer = null; }, 500); 
-        });
+        item.addEventListener('pointerdown', (e) => { pressTimer = setTimeout(() => { showMenu(e.clientX, e.clientY); pressTimer = null; }, 500); });
         item.addEventListener('pointerup', () => clearTimeout(pressTimer));
         item.addEventListener('pointermove', () => clearTimeout(pressTimer));
 
@@ -715,7 +725,7 @@ APPS.files = {
       });
     }
 
-    // 空白处右键菜单（粘贴、属性）
+    // 空白处右键菜单
     const listShowMenu = (x, y) => {
       selectedPath = null;
       Array.from(listEl.children).forEach(el => el.classList.remove('selected'));
@@ -747,24 +757,106 @@ APPS.files = {
     };
 
     listEl.addEventListener('contextmenu', (e) => { e.preventDefault(); if (!e.target.closest('.fm-item')) listShowMenu(e.clientX, e.clientY); });
-    
     let listPressTimer = null;
     listEl.addEventListener('pointerdown', (e) => {
-      if (e.target.closest('.fm-item')) return; // 点击了文件由上面的逻辑处理
+      if (e.target.closest('.fm-item')) return;
       listPressTimer = setTimeout(() => { listShowMenu(e.clientX, e.clientY); listPressTimer = null; }, 500);
     });
     listEl.addEventListener('pointerup', () => clearTimeout(listPressTimer));
     listEl.addEventListener('pointermove', () => clearTimeout(listPressTimer));
 
-    // 顶部栏与视图切换
+    // 顶部工具栏事件绑定
     body.querySelector('.fm-up').onclick = () => { if (cwd === '/.trash' || cwd === '/') cwd = cwd === '/.trash' ? '/home/guest' : '/'; else cwd = cwd.replace(/\/[^/]+$/, '') || '/'; render(); };
-    body.querySelector('#view-btn').onclick = () => {
+    viewBtn.onclick = () => {
       isListView = !isListView;
       listEl.className = 'fm-list ' + (isListView ? 'list-view' : 'grid-view');
-      body.querySelector('#view-btn').textContent = isListView ? '▤ 网格' : '▦ 列表';
+      viewBtn.textContent = isListView ? '▤ 网格' : '▦ 列表';
     };
 
-    // 全局点击关闭选中
+    body.querySelector('[data-a="newdir"]').onclick = () => { const name = prompt('名称：'); if (name) { getNode(cwd).children[name] = { type: 'dir', children: {} }; render(); } };
+    body.querySelector('[data-a="newfile"]').onclick = () => { const name = prompt('文件名：'); if (name) { getNode(cwd).children[name] = { type: 'file', content: '', mime: 'text/plain' }; render(); } };
+    body.querySelector('[data-a="copy"]').onclick = () => { if (selectedPath) Clipboard = { action: 'copy', path: selectedPath }; else alert('请先选择文件'); };
+    body.querySelector('[data-a="cut"]').onclick = () => { if (selectedPath) Clipboard = { action: 'cut', path: selectedPath }; else alert('请先选择文件'); };
+    body.querySelector('[data-a="paste"]').onclick = () => {
+      if (!Clipboard.path) return alert('剪贴板为空');
+      const src = getParent(Clipboard.path), dest = getNode(cwd), name = Clipboard.path.split('/').pop();
+      if (cwd.startsWith(Clipboard.path) && Clipboard.path !== cwd) return alert('无法粘贴到自身目录');
+      if (dest.children[name]) return alert('已存在同名项目');
+      dest.children[name] = JSON.parse(JSON.stringify(src.parent.children[name]));
+      if (Clipboard.action === 'cut') { delete src.parent.children[name]; Clipboard = { action: null, path: null }; }
+      selectedPath = null; render();
+    };
+    body.querySelector('[data-a="rename"]').onclick = () => {
+      if (!selectedPath) return alert('请先选择要重命名的项目');
+      const par = getParent(selectedPath);
+      if (par && par.parent) {
+        const oldName = par.name;
+        const newName = prompt('请输入新名称：', oldName);
+        if (!newName || newName === oldName) return;
+        if (par.parent.children[newName]) return alert('该名称已存在');
+        par.parent.children[newName] = par.parent.children[oldName];
+        delete par.parent.children[oldName];
+        selectedPath = null; render();
+      }
+    };
+    body.querySelector('[data-a="delete"]').onclick = () => {
+      if (!selectedPath) return alert('请先选择要删除的文件');
+      const par = getParent(selectedPath);
+      if (par && par.parent) {
+        const node = par.parent.children[par.name];
+        node._originalPath = cwd; 
+        FS.children['.trash'].children[par.name] = node; 
+        delete par.parent.children[par.name];
+        selectedPath = null; render();
+      }
+    };
+    body.querySelector('[data-a="restore"]').onclick = () => {
+      if (!selectedPath) return alert('请先选择要恢复的文件');
+      const par = getParent(selectedPath);
+      if (par && par.parent) {
+        const node = par.parent.children[par.name];
+        let targetPath = node._originalPath || '/home/guest';
+        let targetNode = getNode(targetPath);
+        if (!targetNode) targetNode = getNode('/home/guest');
+        let finalName = par.name;
+        if (targetNode.children[finalName]) {
+          finalName = prompt('原目录存在同名文件，请输入新名称:', finalName);
+          if (!finalName) return; 
+        }
+        targetNode.children[finalName] = node;
+        delete par.parent.children[par.name];
+        selectedPath = null; render();
+      }
+    };
+    body.querySelector('[data-a="empty"]').onclick = () => {
+      if (!selectedPath) return alert('请先选择要彻底删除的文件');
+      if (!confirm('彻底删除后无法恢复，确定吗？')) return;
+      const par = getParent(selectedPath);
+      if (par && par.parent) {
+        delete par.parent.children[par.name];
+        selectedPath = null; render();
+      }
+    };
+    body.querySelector('[data-a="upload"]').onclick = () => fileInput.click();
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0]; if (!file) return;
+      const isText = file.type.startsWith('text/') || /\.(txt|md|json|js|css|html|xml|csv|log)$/i.test(file.name);
+      const node = getNode(cwd);
+      if (isText) {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          node.children[file.name] = { type: 'file', content: ev.target.result, mime: file.type || 'text/plain', name: file.name, size: file.size };
+          render();
+        };
+        reader.readAsText(file);
+      } else {
+        const url = URL.createObjectURL(file);
+        node.children[file.name] = { type: 'file', url: url, mime: file.type, name: file.name, size: file.size };
+        render();
+      }
+      fileInput.value = '';
+    };
+
     document.addEventListener('pointerdown', (e) => {
       if (!e.target.closest('.fm-list') && !e.target.closest('#context-menu')) {
         selectedPath = null;
@@ -777,7 +869,7 @@ APPS.files = {
 };
 
 /* =========================================================
-   7. 其余应用 (记事本/计算器/设置等)
+   7. 其余应用
    ========================================================= */
 APPS.notepad = {
   name: '记事本', icon: '📝', width: 580, height: 440,
