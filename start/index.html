@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>起始页</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0b0d12;
+    --text: #e9ecf2;
+    --muted: #7f8798;
+    --line: rgba(255, 255, 255, .09);
+    --card: rgba(255, 255, 255, .045);
+    --card-hover: rgba(255, 255, 255, .09);
+    --accent: #6f9bff;
+  }
+
+  html, body { height: 100%; }
+
+  body {
+    min-height: 100dvh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px 80px; /* 底部留出空间给悬浮按钮 */
+    overflow-x: hidden;
+  }
+
+  /* 背景光晕 */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(650px circle at 15% 8%,  rgba(70, 120, 255, .22), transparent 60%),
+      radial-gradient(700px circle at 85% 82%, rgba(160, 80, 255, .16), transparent 62%),
+      radial-gradient(600px circle at 55% 112%, rgba(0, 190, 170, .12), transparent 60%);
+  }
+
+  .wrap { position: relative; z-index: 1; width: 100%; max-width: 680px; }
+
+  /* ---------- 时钟 ---------- */
+  .head { text-align: center; margin-bottom: 38px; }
+
+  .clock {
+    font-size: clamp(56px, 12vw, 88px);
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: .04em;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #ffffff, #a3b0cd);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .date {
+    margin-top: 14px;
+    font-size: 14px;
+    letter-spacing: .14em;
+    color: var(--muted);
+  }
+
+  /* ---------- 搜索框 ---------- */
+  .search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 6px 6px 18px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+    transition: border-color .25s, box-shadow .25s;
+  }
+
+  .search:focus-within {
+    border-color: rgba(111, 155, 255, .5);
+    box-shadow: 0 0 0 4px rgba(111, 155, 255, .1), 0 10px 30px rgba(0, 0, 0, .35);
+  }
+
+  .search input {
+    flex: 1;
+    min-width: 0;
+    padding: 12px 0;
+    border: none;
+    outline: none;
+    background: none;
+    color: var(--text);
+    font-size: 16px;
+    font-family: inherit;
+  }
+  .search input::placeholder { color: var(--muted); }
+
+  .search button {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, .08);
+    color: var(--text);
+    cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+  .search button:hover { background: var(--accent); color: #fff; }
+
+  /* ---------- 搜索引擎切换 ---------- */
+  .engines {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .engines button {
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: none;
+    color: var(--muted);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: .2s;
+  }
+  .engines button:hover { color: var(--text); background: rgba(255, 255, 255, .05); }
+  .engines button.active {
+    color: var(--accent);
+    background: rgba(111, 155, 255, .12);
+    border-color: rgba(111, 155, 255, .25);
+  }
+
+  /* ---------- 快捷链接 ---------- */
+  .links {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 12px;
+    margin-top: 40px;
+  }
+
+  .link {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    padding: 16px 8px 13px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--card);
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 12.5px;
+    transition: .22s;
+  }
+
+  .link:hover {
+    transform: translateY(-3px);
+    background: var(--card-hover);
+    border-color: rgba(255, 255, 255, .18);
+    color: var(--text);
+  }
+
+  .link .icon { font-size: 22px; line-height: 1; }
+
+  .link span:last-child {
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* 删除按钮 */
+  .link .del-btn {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #ff4b4b;
+    color: white;
+    border: none;
+    font-size: 12px;
+    line-height: 18px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .2s;
+    box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  }
+  .link:hover .del-btn { opacity: 1; }
+
+  /* ---------- 右下角悬浮添加按钮 (FAB) ---------- */
+  .fab-add {
+    position: fixed;
+    right: 32px;
+    bottom: 32px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(111, 155, 255, 0.4);
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+    z-index: 5;
+  }
+  .fab-add:hover {
+    transform: translateY(-4px) scale(1.05);
+    background: #5b85f0;
+    box-shadow: 0 12px 28px rgba(111, 155, 255, 0.5);
+  }
+  .fab-add svg { width: 26px; height: 26px; }
+
+  /* ---------- 弹窗 (Modal) ---------- */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .6);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .25s;
+  }
+  .modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal {
+    background: #151821;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 24px;
+    width: 90%;
+    max-width: 340px;
+    box-shadow: 0 20px 40px rgba(0,0,0,.5);
+    transform: translateY(10px);
+    transition: transform .25s;
+  }
+  .modal-overlay.active .modal { transform: translateY(0); }
+
+  .modal h3 {
+    font-size: 16px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .modal input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(0,0,0,.2);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .2s;
+  }
+  .modal input:focus { border-color: var(--accent); }
+
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 8px;
+  }
+
+  .modal-actions button {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: inherit;
+    transition: .2s;
+  }
+  .modal-actions .cancel {
+    background: transparent;
+    color: var(--muted);
+  }
+  .modal-actions .cancel:hover { background: rgba(255,255,255,.05); color: var(--text); }
+  .modal-actions .save {
+    background: var(--accent);
+    color: white;
+  }
+  .modal-actions .save:hover { background: #5b85f0; }
+
+  @media (max-width: 420px) {
+    .links { grid-template-columns: repeat(3, 1fr); }
+    .fab-add { right: 20px; bottom: 20px; }
+  }
+</style>
+</head>
+<body>
+
+  <main class="wrap">
+
+    <header class="head">
+      <div class="clock" id="clock">--:--</div>
+      <div class="date" id="date"></div>
+    </header>
+
+    <form class="search" id="searchForm">
+      <input id="q" type="text" placeholder="搜索，或输入网址…"
+             autocomplete="off" spellcheck="false" autofocus>
+      <button type="submit" aria-label="搜索">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="M20 20l-3.6-3.6"></path>
+        </svg>
+      </button>
+    </form>
+
+    <nav class="engines" id="engines">
+      <button data-engine="bing">Bing</button>
+      <button data-engine="google">Google</button>
+      <button data-engine="baidu">百度</button>
+      <button data-engine="ddg">DuckDuckGo</button>
+    </nav>
+
+    <!-- 快捷链接区域 -->
+    <section class="links" id="linksContainer"></section>
+
+  </main>
+
+  <!-- 右下角悬浮添加按钮 -->
+  <button class="fab-add" id="fabAdd" aria-label="添加书签">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  </button>
+
+  <!-- 添加链接的弹窗 -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <h3>添加新书签</h3>
+      <input type="text" id="siteName" placeholder="网站名称 (如: 微博)" autocomplete="off">
+      <input type="text" id="siteUrl" placeholder="网址 (如: weibo.com)" autocomplete="off">
+      <input type="text" id="siteIcon" placeholder="图标 Emoji (可选，如: 🐦)" autocomplete="off">
+      <div class="modal-actions">
+        <button class="cancel" id="cancelAdd">取消</button>
+        <button class="save" id="saveAdd">保存</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  /* ---------- 安全的 localStorage 封装（防止浏览器隐私模式报错） ---------- */
+  const store = {
+    get(key, fallback) {
+      try {
+        const v = localStorage.getItem(key);
+        return v ? JSON.parse(v) : fallback;
+      } catch(e) {
+        return fallback;
+      }
+    },
+    set(key, val) {
+      try {
+        localStorage.setItem(key, JSON.stringify(val));
+      } catch(e) {}
+    },
+    getString(key, fallback) {
+      try {
+        return localStorage.getItem(key) || fallback;
+      } catch(e) {
+        return fallback;
+      }
+    },
+    setString(key, val) {
+      try {
+        localStorage.setItem(key, val);
+      } catch(e) {}
+    }
+  };
+
+  /* ---------- 1. 时钟 ---------- */
+  const clockEl = document.getElementById('clock');
+  const dateEl  = document.getElementById('date');
+  const WEEK = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+  const pad = n => String(n).padStart(2, '0');
+
+  function tick() {
+    const d = new Date();
+    clockEl.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
+    dateEl.textContent =
+      `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${WEEK[d.getDay()]}`;
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  /* ---------- 2. 搜索引擎 ---------- */
+  const ENGINES = {
+    bing:   'https://www.bing.com/search?q=',
+    google: 'https://www.google.com/search?q=',
+    baidu:  'https://www.baidu.com/s?wd=',
+    ddg:    'https://duckduckgo.com/?q='
+  };
+
+  const engineBtns = document.querySelectorAll('#engines button');
+  const form = document.getElementById('searchForm');
+  const input = document.getElementById('q');
+  let current = store.getString('startpage-engine', 'bing');
+
+  function setEngine(name) {
+    if (!ENGINES[name]) name = 'bing';
+    current = name;
+    store.setString('startpage-engine', name);
+    engineBtns.forEach(b => b.classList.toggle('active', b.dataset.engine === name));
+  }
+
+  engineBtns.forEach(btn =>
+    btn.addEventListener('click', () => {
+      setEngine(btn.dataset.engine);
+      input.focus();
+    })
+  );
+  setEngine(current);
+
+  /* ---------- 3. 搜索 / 网址跳转 ---------- */
+  function looksLikeUrl(s) {
+    if (/\s/.test(s)) return false;
+    return /^(https?:\/\/)?([\w-]+\.)+[a-zA-Z]{2,}(:\d+)?([\/?#][^\s]*)?$/.test(s);
+  }
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const value = input.value.trim();
+    if (!value) return;
+
+    if (looksLikeUrl(value)) {
+      location.href = /^https?:\/\//i.test(value) ? value : 'https://' + value;
+      return;
+    }
+    location.href = ENGINES[current] + encodeURIComponent(value);
+  });
+
+  /* ---------- 4. 快捷链接的增删查 ---------- */
+  const linksContainer = document.getElementById('linksContainer');
+  const addModal = document.getElementById('addModal');
+  
+  // 默认书签数据
+  const defaultLinks = [
+    { name: 'GitHub', url: 'https://github.com', icon: '🐙' },
+    { name: '哔哩哔哩', url: 'https://www.bilibili.com', icon: '📺' },
+    { name: '知乎', url: 'https://www.zhihu.com', icon: '💡' },
+    { name: 'YouTube', url: 'https://www.youtube.com', icon: '🎬' },
+    { name: '掘金', url: 'https://juejin.cn', icon: '⛏️' },
+    { name: '网易云', url: 'https://music.163.com', icon: '🎧' },
+    { name: 'ChatGPT', url: 'https://chatgpt.com', icon: '🤖' },
+    { name: '邮箱', url: 'https://mail.google.com', icon: '✉️' },
+    { name: '淘宝', url: 'https://www.taobao.com', icon: '🛒' }
+  ];
+
+  function getLinks() {
+    return store.get('startpage-links', defaultLinks);
+  }
+
+  // 渲染书签列表
+  function renderLinks() {
+    const links = getLinks();
+    linksContainer.innerHTML = ''; 
+
+    links.forEach((link, index) => {
+      const a = document.createElement('a');
+      a.className = 'link';
+      a.href = link.url;
+      a.target = '_blank';
+      a.rel = 'noreferrer';
+      
+      // 删除按钮
+      const delBtn = document.createElement('button');
+      delBtn.className = 'del-btn';
+      delBtn.innerHTML = '×';
+      delBtn.title = '删除此链接';
+      delBtn.onclick = (e) => {
+        e.preventDefault(); 
+        e.stopPropagation();
+        if (confirm(`确定要删除 "${link.name}" 吗？`)) {
+          const newLinks = getLinks();
+          newLinks.splice(index, 1);
+          store.set('startpage-links', newLinks);
+          renderLinks();
+        }
+      };
+
+      const iconSpan = document.createElement('span');
+      iconSpan.className = 'icon';
+      iconSpan.textContent = link.icon || '🔗';
+      
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = link.name;
+
+      a.appendChild(delBtn);
+      a.appendChild(iconSpan);
+      a.appendChild(nameSpan);
+      linksContainer.appendChild(a);
+    });
+  }
+
+  // 打开弹窗
+  document.getElementById('fabAdd').onclick = () => {
+    document.getElementById('siteName').value = '';
+    document.getElementById('siteUrl').value = '';
+    document.getElementById('siteIcon').value = '';
+    addModal.classList.add('active');
+    document.getElementById('siteName').focus();
+  };
+
+  // 处理添加新链接
+  document.getElementById('saveAdd').onclick = () => {
+    const name = document.getElementById('siteName').value.trim();
+    let url = document.getElementById('siteUrl').value.trim();
+    const icon = document.getElementById('siteIcon').value.trim();
+
+    if (!name || !url) {
+      alert('网站名称和网址不能为空！');
+      return;
+    }
+
+    if (!/^https?:\/\//i.test(url)) {
+      url = 'https://' + url;
+    }
+
+    const links = getLinks();
+    links.push({ name, url, icon: icon || '🔗' });
+    store.set('startpage-links', links);
+    
+    addModal.classList.remove('active');
+    renderLinks();
+  };
+
+  // 取消添加
+  document.getElementById('cancelAdd').onclick = () => {
+    addModal.classList.remove('active');
+  };
+
+  // 点击弹窗背景关闭
+  addModal.onclick = (e) => {
+    if (e.target === addModal) {
+      addModal.classList.remove('active');
+    }
+  };
+
+  // 监听回车键提交表单
+  document.querySelectorAll('.modal input').forEach(inputEl => {
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') document.getElementById('saveAdd').click();
+      if (e.key === 'Escape') addModal.classList.remove('active');
+    });
+  });
+
+  // 初始化渲染
+  renderLinks();
+
+  /* ---------- 5. 快捷键聚焦搜索框 ---------- */
+  document.addEventListener('keydown', e => {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      e.preventDefault();
+      input.focus();
+      input.select();
+    }
+  });
+})();
+</script>
+</body>
+</html>
