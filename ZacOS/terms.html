@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZacOS 开源软件使用条款 - Zizhou Company</title>
+    <link rel="icon" type="image/jpeg" href="https://s41.ax1x.com/2026/11/12/pnI5Nk9.jpg">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg-alt: #161b22;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --primary: #58a6ff;
+            --border: #30363d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-alt);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        .doc-header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .doc-header h1 {
+            font-size: 36px;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+
+        .meta-info {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .meta-info strong {
+            color: var(--text);
+        }
+
+        h2 {
+            font-size: 22px;
+            color: #fff;
+            margin-top: 32px;
+            margin-bottom: 16px;
+        }
+
+        h3 {
+            font-size: 18px;
+            color: #fff;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+
+        p {
+            margin-bottom: 16px;
+        }
+
+        ul {
+            margin-bottom: 16px;
+            padding-left: 24px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+            font-size: 14px;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--bg-alt);
+            color: #fff;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 24px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            padding: 32px 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 48px;
+        }
+        
+        footer a {
+            color: var(--text-muted);
+        }
+        
+        footer a:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="https://s41.ax1x.com/2026/11/12/pnI5Nk9.jpg" alt="ZacOS Icon">
+            <a href="index.html" style="color: #fff;">ZacOS</a>
+        </div>
+        <div>
+            <a href="index.html">返回首页</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <a href="index.html" class="back-btn">← 返回首页</a>
+        
+        <div class="doc-header">
+            <h1>ZacOS 开源软件使用条款</h1>
+            <div class="meta-info">
+                <p><strong>版本：</strong> 2.2</p>
+                <p><strong>生效日期：</strong> 2026年11月13日</p>
+                <p><strong>许可方/项目维护方：</strong> Zizhou Company（以下简称“公司”“我们”）</p>
+                <p><strong>适用产品：</strong> ZacOS 操作系统及其源代码、二进制文件、固件、驱动程序、更新、文档和相关组件（统称“ZacOS”或“本软件”）</p>
+                <p><strong>开源许可证：</strong> MIT License</p>
+            </div>
+        </div>
+
+        <h2>1. 条款性质与适用范围</h2>
+        <p>1.1 本条款是 Zizhou Company 针对 ZacOS 开源项目发布的使用条款和补充说明，不替代 ZacOS 所适用的开源许可证。</p>
+        <p>1.2 您对 ZacOS 源代码、二进制文件、文档及其他材料的使用、复制、修改和分发，首先受项目 <code>LICENSE</code> 文件中的 MIT 许可证约束。</p>
+        <p>1.3 如果本条款与开源许可证发生冲突，就相关开源软件而言，以 MIT 许可证为准。</p>
+        <p>1.4 本条款适用于不涉及开源许可证授权范围的事项，包括但不限于商标使用、项目名称、官方渠道、免责声明、出口合规和联系方式。</p>
+        <p>1.5 在下载、安装、复制、修改、分发或以其他方式使用 ZacOS 前，请阅读并遵守适用的开源许可证和本条款。如果您不同意，请停止使用 ZacOS。</p>
+
+        <h2>2. 开源许可授予</h2>
+        <p>2.1 在遵守适用开源许可证的前提下，Zizhou Company 授予您复制、使用、修改、分发 ZacOS 源代码及相关材料的权利。具体权利、义务和限制以项目 <code>LICENSE</code>（MIT）文件为准。</p>
+        <p>2.2 您分发 ZacOS 或其修改版本时，必须遵守 MIT 许可证的要求，包括但不限于保留版权声明、许可证文本、免责声明。</p>
+        <p>2.3 如果您修改 ZacOS 并分发修改版本，应在合理范围内标明您作出了修改，且不得暗示该修改版本由 Zizhou Company 官方发布或认可。</p>
+        <p>2.4 本条款不限制开源许可证赋予您的任何权利。开源许可证未授予的权利，仍由 Zizhou Company 或其许可方保留。</p>
+
+        <h2>3. 源代码获取</h2>
+        <p>3.1 ZacOS 源代码通过项目官方仓库或公司指定渠道提供。</p>
+        <p>3.2 如果适用开源许可证要求提供源代码，您应按照该许可证的要求向接收方提供对应源代码。</p>
+        <p>3.3 二进制分发不改变您依据开源许可证应承担的源代码提供义务。</p>
+
+        <h2>4. 商标与品牌</h2>
+        <p>4.1 “ZacOS”“Zizhou Company”及相关标识、名称和品牌是 Zizhou Company 的商标或标识。开源许可证不授予您使用这些商标、名称或品牌的权利，除非适用法律允许或公司另行书面许可。</p>
+        <p>4.2 您可以在真实、客观描述 ZacOS 来源或兼容性的范围内使用“ZacOS”名称，但不得使他人误认为您的修改版本、产品或服务由 Zizhou Company 官方发布、赞助或认可。</p>
+        <p>4.3 未经书面许可，不得将“ZacOS”或易混淆名称用于您的衍生发行版、商业产品、域名、应用名称或宣传材料。</p>
+
+        <h2>5. 使用限制与合规</h2>
+        <p>您同意不得利用 ZacOS 实施以下行为：</p>
+        <p>5.1 违反适用法律法规、侵犯他人知识产权、隐私权或其他合法权益；</p>
+        <p>5.2 传播恶意软件、实施网络攻击、未经授权访问系统或破坏网络安全；</p>
+        <p>5.3 移除、篡改或规避 ZacOS 中依法应保留的版权、许可证或其他权利声明；</p>
+        <p>5.4 以违反适用出口管制、制裁或贸易法律的方式使用、出口、再出口或转移 ZacOS；</p>
+        <p>5.5 将 ZacOS 用于核设施、航空导航、医疗生命支持、军事武器或其他高风险场景，除非您已自行完成充分安全评估并承担相应责任；</p>
+        <p>5.6 以任何方式暗示 Zizhou Company 对您的使用、修改或分发作出保证、背书或承担额外责任。</p>
+
+        <h2>6. 第三方软件与开源组件</h2>
+        <p>6.1 ZacOS 可能包含第三方软件或开源组件，该等组件受其各自许可证约束。</p>
+        <p>6.2 如果本条款或项目主许可证与第三方组件许可证发生冲突，就相关第三方组件而言，以其各自许可证为准。</p>
+        <p>6.3 您分发包含第三方组件的 ZacOS 时，应遵守所有相关许可证的声明、通知和源代码提供要求。</p>
+
+        <h2>7. 贡献</h2>
+        <p>7.1 如果您向 ZacOS 项目提交代码、文档、翻译、问题修复或其他贡献，您声明并保证您有权提交该贡献，且该贡献不侵犯第三方权利。</p>
+        <p>7.2 除非项目另行规定，您提交的贡献将按照项目适用的开源许可证（MIT）进行许可。</p>
+        <p>7.3 您应遵守项目仓库中的贡献指南、行为准则和开发者证书要求（如有）。</p>
+
+        <h2>8. 更新与变更</h2>
+        <p>8.1 ZacOS 项目可能不定期发布更新、补丁、新版本或停止维护某些版本。</p>
+        <p>8.2 自动更新功能（如适用）可能下载并安装更新。您应自行确认更新是否符合您的使用环境和合规要求。</p>
+        <p>8.3 Zizhou Company 可随时修改、暂停或终止项目的官方发布、维护或支持，但该等行为不影响您依据开源许可证对已获得版本享有的权利。</p>
+
+        <h2>9. 隐私与数据</h2>
+        <p>9.1 ZacOS 可能包含诊断、日志、崩溃报告或使用统计功能。相关数据的收集和处理受《ZacOS 隐私政策》约束，隐私政策可通过 [隐私政策链接] 查阅。</p>
+        <p>9.2 您应自行负责您通过 ZacOS 处理、存储或传输的数据的安全、备份和合法性。</p>
+        <p>9.3 如果您修改 ZacOS 或将其集成到其他产品中，您应自行提供必要的隐私声明并遵守适用数据保护法律。</p>
+
+        <h2>10. 免责声明</h2>
+        <p>10.1 在适用法律允许的最大范围内，ZacOS 按“现状”和“现有”提供，不附带任何明示或默示保证，包括但不限于适销性、特定用途适用性、所有权和不侵权保证。</p>
+        <p>10.2 Zizhou Company 不保证 ZacOS 无错误、不中断、无安全漏洞，或与所有硬件、软件、网络和第三方服务兼容。</p>
+        <p>10.3 您自行承担使用、修改和分发 ZacOS 的风险。部分司法辖区不允许排除默示保证，因此上述排除可能不适用于您。</p>
+
+        <h2>11. 责任限制</h2>
+        <p>11.1 在适用法律允许的最大范围内，Zizhou Company 不对任何间接、附带、特殊、惩罚性、示范性或后果性损害承担责任，包括但不限于利润损失、数据丢失、业务中断、设备损坏或替代服务成本。</p>
+        <p>11.2 在适用法律允许的最大范围内，Zizhou Company 就 ZacOS 或本条款产生的全部责任，不超过您为 ZacOS 实际支付的费用；如果您未支付任何费用，则不超过 [100] 美元或等值货币。</p>
+        <p>11.3 本条款不排除或限制适用法律不得排除或限制的责任。</p>
+
+        <h2>12. 赔偿</h2>
+        <p>12.1 您同意赔偿、辩护并使 Zizhou Company、其关联方、董事、员工、代理和贡献者免受因以下原因产生的索赔、损失、责任、费用和开支：</p>
+        <p>(a) 您违反适用开源许可证或本条款；</p>
+        <p>(b) 您违法使用 ZacOS；</p>
+        <p>(c) 您修改、分发或部署 ZacOS 导致第三方权利受损；</p>
+        <p>(d) 您的内容或数据。</p>
+        <p>12.2 Zizhou Company 保留就应由您赔偿的事项自行选择法律顾问并控制辩护的权利。</p>
+
+        <h2>13. 终止</h2>
+        <p>13.1 您违反适用开源许可证或本条款时，相关许可可能依据开源许可证或适用法律终止。</p>
+        <p>13.2 本条款中关于商标、免责声明、责任限制、赔偿、法律适用和争议解决的条款，在您停止使用 ZacOS 后继续有效。</p>
+        <p>13.3 开源许可证项下权利的终止或恢复，以该开源许可证的具体条款为准。</p>
+
+        <h2>14. 出口管制与制裁合规</h2>
+        <p>您不得违反任何适用的出口管制、制裁或贸易法律使用、出口、再出口或转移 ZacOS。您声明并保证，您不属于任何受适用制裁或出口限制的主体，也不会将 ZacOS 用于受禁止的最终用途。</p>
+
+        <h2>15. 政府用户</h2>
+        <p>如果 ZacOS 被提供给政府机构使用，本条款项下的权利和开源许可证项下的权利应同时遵守适用采购法律和开源许可证。开源许可证授予的权利不因政府采购而减少。</p>
+
+        <h2>16. 条款变更</h2>
+        <p>16.1 Zizhou Company 可能不时修订本条款。修订版本将在项目仓库或指定页面发布时或指定日期生效。</p>
+        <p>16.2 本条款修订不影响已发布版本所适用的开源许可证。</p>
+        <p>16.3 如果您在修订生效后继续使用 ZacOS 的官方发布、文档或服务，即表示您接受修订后的本条款。</p>
+
+        <h2>17. 适用法律与争议解决</h2>
+        <p>17.1 本条款受 Zizhou Company 主要营业地所在司法辖区的法律管辖，不考虑其冲突法规则。</p>
+        <p>17.2 因本条款产生的争议，双方应首先友好协商。协商不成的，提交 Zizhou Company 主要营业地有管辖权的法院解决，除非适用法律另有强制性规定。</p>
+        <p>17.3 开源许可证项下的争议应优先依据该许可证的条款处理。</p>
+
+        <h2>18. 一般条款</h2>
+        <p>18.1 如果本条款任何条款被认定无效或不可执行，其余条款仍应继续有效。</p>
+        <p>18.2 我们未行使或延迟行使任何权利，不构成对该权利的放弃。</p>
+        <p>18.3 本条款与开源许可证共同构成您与 Zizhou Company 就 ZacOS 使用达成的完整约定；冲突时以开源许可证为准。</p>
+        <p>18.4 未经 Zizhou Company 事先书面同意，您不得转让本条款项下的权利或义务，但开源许可证允许的转让除外。</p>
+        <p>18.5 因不可抗力、自然灾害、战争、网络攻击、政府行为或其他超出合理控制范围的事件导致的中断或延迟，Zizhou Company 不承担责任。</p>
+
+        <h2>19. 联系方式</h2>
+        <p><strong>Zizhou Company</strong><br>
+        ZacOS 开源项目组<br>
+        邮箱：<a href="mailto:127.0.0.1@astermail.org">127.0.0.1@astermail.org</a><br>
+        项目仓库：<a href="https://git.rivulet.org.cn/yangzizhoudiwuxuande/" target="_blank">https://git.rivulet.org.cn/yangzizhoudiwuxuande/</a></p>
+
+        <h2>20. 版本历史</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>版本</th>
+                    <th>日期</th>
+                    <th>说明</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1.0</td>
+                    <td>2026-10-05</td>
+                    <td>初始专有软件使用条款</td>
+                </tr>
+                <tr>
+                    <td>2.0</td>
+                    <td>2026-11-11</td>
+                    <td>更新为开源软件使用条款；明确开源许可证优先、源代码获取、贡献、商标和第三方组件规则</td>
+                </tr>
+                <tr>
+                    <td>2.1</td>
+                    <td>2026-11-11</td>
+                    <td>品牌名称统一更正为 ZacOS；不改变实质条款</td>
+                </tr>
+                <tr>
+                    <td>2.2</td>
+                    <td>2026-11-13</td>
+                    <td>明确适用 MIT License；更新联系邮箱与项目仓库链接</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <footer>
+        <span>&copy; 2026 Zizhou Company.</span>
+        <a href="terms.html">ZacOS 开源软件使用条款 v2.2</a>
+        <a href="news.html">新闻中心</a>
+    </footer>
+
+</body>
+</html>
