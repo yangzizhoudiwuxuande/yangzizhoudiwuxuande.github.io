@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新闻中心 - ZacOS</title>
+    <link rel="icon" type="image/jpeg" href="https://s41.ax1x.com/2026/11/12/pnI5Nk9.jpg">
+    <style>
+        :root {
+            --bg: #0d1117;
+            --bg-alt: #161b22;
+            --text: #c9d1d9;
+            --text-muted: #8b949e;
+            --primary: #58a6ff;
+            --border: #30363d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: var(--bg-alt);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .logo img {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 48px 24px;
+        }
+
+        .page-title {
+            font-size: 36px;
+            color: #fff;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .news-article {
+            background-color: var(--bg-alt);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 32px;
+        }
+
+        .news-meta {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+        
+        .tag {
+            background-color: rgba(88, 166, 255, 0.1);
+            color: var(--primary);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            border: 1px solid rgba(88, 166, 255, 0.2);
+        }
+
+        .news-title {
+            font-size: 28px;
+            color: #fff;
+            margin-bottom: 24px;
+            line-height: 1.3;
+        }
+
+        .news-content p {
+            margin-bottom: 16px;
+            color: var(--text);
+            font-size: 16px;
+        }
+
+        .news-content blockquote {
+            border-left: 4px solid var(--primary);
+            padding-left: 16px;
+            margin: 24px 0;
+            color: var(--text-muted);
+            font-style: italic;
+            background-color: rgba(88, 166, 255, 0.05);
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 24px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            padding: 32px 24px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 14px;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 48px;
+        }
+        
+        footer a {
+            color: var(--text-muted);
+        }
+        
+        footer a:hover {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo">
+            <img src="https://s41.ax1x.com/2026/11/12/pnI5Nk9.jpg" alt="ZacOS Icon">
+            <a href="index.html" style="color: #fff;">ZacOS</a>
+        </div>
+        <div>
+            <a href="index.html">返回首页</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <h1 class="page-title">新闻中心</h1>
+
+        <!-- 第一篇新闻 -->
+        <article class="news-article">
+            <div class="news-meta">
+                <span>2026-11-13</span>
+                <span class="tag">产品发布</span>
+                <span>Zizhou Company 官方</span>
+            </div>
+            <h2 class="news-title">ZacOS 将生成开发者系统：DeveloperOS 破茧而出</h2>
+            
+            <div class="news-content">
+                <p>今天，Zizhou Company 宣布了一项激动人心的计划：基于广受好评的 ZacOS，我们将推出专属的开发者系统 —— <strong>DeveloperOS</strong>。</p>
+                
+                <p>ZacOS 一直以“快轻巧”著称，而全新的 DeveloperOS 完美继承了这一基因。我们在保持系统极致轻量的同时，深度集成了现代开发所需的各类原生工具链，包括终端增强、原生容器支持以及无缝的云端协同环境。</p>
+
+                <blockquote>
+                    “我们希望开发者拿到系统的那一刻，就可以立刻开始敲代码，而不是把时间浪费在繁琐的环境配置上。DeveloperOS 不仅是一个操作系统，它更是开发者的效率引擎。”
+                    <br>—— Zizhou Company 首席产品官
+                </blockquote>
+
+                <p>为了满足不同开发者的需求，DeveloperOS 经过了极度精简与优化。移除了所有不必要的冗余组件，将更多系统资源留给编译器、虚拟机与你的代码。</p>
+
+                <p>目前，<strong>DeveloperOS 已在版本发布页面正式提供下载</strong>（文件大小仅 10.29MB）。欢迎大家前往下载页获取体验，与我们共同打造未来的开发者生态。</p>
+            </div>
+        </article>
+
+        <a href="index.html" class="back-btn">← 返回首页下载 DeveloperOS</a>
+    </div>
+
+    <footer>
+        <span>&copy; 2026 Zizhou Company.</span>
+        <a href="terms.html">ZacOS 开源软件使用条款 v2.2</a>
+        <a href="news.html">新闻中心</a>
+    </footer>
+
+</body>
+</html>
