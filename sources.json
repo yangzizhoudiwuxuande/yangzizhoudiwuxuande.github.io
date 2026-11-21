@@ -27,6 +27,30 @@
           "size": 1640155
         }
       ]
+    },
+    {
+      "name": "Podium",
+      "bundleIdentifier": "com.leviidev.podium",
+      "developerName": "杨梓周 (汉化)",
+      "subtitle": "Podium 播客客户端",
+      "localizedDescription": "Podium 是一款优秀的播客客户端，此为汉化版本。",
+      "iconURL": "https://s41.ax1x.com/2026/11/21/pnqYDxA.png",
+      "screenshotURLs": [
+        "https://s41.ax1x.com/2026/11/21/pnqYyrt.png",
+        "https://s41.ax1x.com/2026/11/21/pnqYsKl.png"
+      ],
+      "downloadURL": "https://yangzizhoudiwuxuande.github.io/Podium_汉化_0.1.0_杨梓周.ipa",
+      "size": 4900000,
+      "versions": [
+        {
+          "version": "0.1.0",
+          "date": "2026-11-21",
+          "localizedDescription": "Podium 汉化版首个版本。",
+          "minOSVersion": "17.0",
+          "downloadURL": "https://yangzizhoudiwuxuande.github.io/Podium_汉化_0.1.0_杨梓周.ipa",
+          "size": 4900000
+        }
+      ]
     }
   ]
 }
